@@ -44,3 +44,18 @@ export { default as EdgeFraudDetector } from './tensorflow/components/EdgeFraudD
 export { default as BehaviorAnalyzer } from './tensorflow/components/BehaviorAnalyzer';
 export { default as useChat } from './vercel-ai/components/useChat';
 export { default as AIProvider } from './vercel-ai/components/AIProvider';
+// Chat Module
+export { default as ChatWindow } from './chat/components/ChatWindow';
+export { default as ChatHistory } from './chat/components/ChatHistory';
+export { default as Message } from './chat/components/Message';
+export { default as ChatInput } from './chat/components/ChatInput';
+// Auth Module
+export { default as LoginForm } from './auth/components/LoginForm';
+export { default as RegisterForm } from './auth/components/RegisterForm';
+export { default as ForgotPassword } from './auth/components/ForgotPassword';
+export { default as AuthGuard } from './auth/components/AuthGuard';
+// Settings Module
+export { default as ProfileSettings } from './settings/components/ProfileSettings';
+export { default as SecuritySettings } from './settings/components/SecuritySettings';
+export { default as NotificationSettings } from './settings/components/NotificationSettings';
+export { default as PreferencesSettings } from './settings/components/PreferencesSettings';

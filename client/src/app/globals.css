@@ -10,6 +10,15 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  animation: {
+    shimmer: shimmer 2s infinite;
+  }
+  keyframes: {
+    shimmer: {
+      '0%': { backgroundPosition: '-1000px 0' },
+      '100%': { backgroundPosition: '1000px 0' }
+    }
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +32,21 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
+    background-size: 1000px 100%;
+    background-position: -1000px 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
 }
