@@ -1,208 +1,144 @@
 @import "tailwindcss";
 
+/**
+ * PayAI Guardian — Global Design System
+ * Tailwind v4: @theme exposes tokens as utility classes automatically.
+ *
+ * Usage examples:
+ *   bg-guardian-base      → background: #050810
+ *   text-accent-cyan      → color: #00C8FF
+ *   border-glass          → border-color: rgba(0,200,255,0.18)
+ *   font-primary          → font-family: Inter, ...
+ *   rounded-card          → border-radius: 20px
+ *   shadow-glow-primary   → box-shadow: 0 4px 20px rgba(0,150,255,0.4)
+ */
+
 @theme {
-  /* Primary Colors */
-  --color-primary: #0A66C2;
-  --color-primary-dark: #084A8F;
-  --color-primary-light: #3B82F6;
+  /* ── Colors: Backgrounds ──────────────────────────── */
+  --color-guardian-base:      #050810;
+  --color-guardian-surface:   #080C1E;
+  --color-guardian-elevated:  #0F1320;
+  --color-guardian-secondary: #1A1A24;
+  --color-guardian-tertiary:  #2A2A35;
 
-  /* Accent Colors */
-  --color-accent-cyan: #00F5FF;
-  --color-accent-purple: #8B5CF6;
+  /* ── Colors: Brand Primary ────────────────────────── */
+  --color-primary:            #0A66C2;
+  --color-primary-dark:       #084A8F;
+  --color-primary-light:      #4060FF;
 
-  /* Status Colors */
-  --color-status-danger: #FF3B5C;
-  --color-status-warning: #F59E0B;
-  --color-status-success: #10B981;
+  /* ── Colors: Accent Cyan ──────────────────────────── */
+  --color-accent-cyan:        #00C8FF;
+  --color-accent-glow:        rgba(0,200,255,0.3);
+  --color-accent-focus:       rgba(0,200,255,0.12);
+  --color-accent-subtle:      rgba(0,200,255,0.04);
 
-  /* Background Colors */
-  --color-bg-main: #0A0A0F;
-  --color-bg-card: #1A1A24;
-  --color-bg-input: #2A2A35;
+  /* ── Colors: Security / Status ────────────────────── */
+  --color-security:           #8040FF;
+  --color-danger:             #FF3B5C;
+  --color-warning:            #FFA500;
+  --color-success:            #00C851;
 
-  /* Typography */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* ── Colors: Orbit ────────────────────────────────── */
+  --color-orbit-cyan:         #00C8FF;
+  --color-orbit-purple:       #8040FF;
+  --color-orbit-blue:         #4060FF;
 
-  /* Font Sizes (8px scale influenced) */
-  --font-size-xs: 0.75rem;     /* 12px */
-  --font-size-sm: 0.875rem;    /* 14px */
-  --font-size-base: 1rem;      /* 16px */
-  --font-size-lg: 1.125rem;    /* 18px */
-  --font-size-xl: 1.25rem;     /* 20px */
-  --font-size-2xl: 1.5rem;     /* 24px */
-  --font-size-3xl: 1.875rem;   /* 30px */
-  --font-size-4xl: 2.25rem;    /* 36px */
-  --font-size-5xl: 3rem;       /* 48px */
+  /* ── Colors: Text ─────────────────────────────────── */
+  --color-text-primary:       #FFFFFF;
+  --color-text-secondary:     rgba(255,255,255,0.70);
+  --color-text-muted:         rgba(255,255,255,0.45);
+  --color-text-faint:         rgba(255,255,255,0.30);
+  --color-text-disabled:      rgba(255,255,255,0.20);
 
-  /* Spacing (8px Grid) */
-  --spacing-1: 0.25rem;  /* 4px */
-  --spacing-2: 0.5rem;   /* 8px */
-  --spacing-3: 0.75rem;  /* 12px */
-  --spacing-4: 1rem;     /* 16px */
-  --spacing-5: 1.25rem;  /* 20px */
-  --spacing-6: 1.5rem;   /* 24px */
-  --spacing-8: 2rem;     /* 32px */
-  --spacing-10: 2.5rem;  /* 40px */
-  --spacing-12: 3rem;    /* 48px */
-  --spacing-16: 4rem;    /* 64px */
+  /* ── Colors: Borders ──────────────────────────────── */
+  --color-border:             rgba(255,255,255,0.08);
+  --color-border-subtle:      rgba(255,255,255,0.05);
+  --color-border-strong:      rgba(255,255,255,0.15);
+  --color-glass-border:       rgba(0,200,255,0.18);
+  --color-glass-white:        rgba(255,255,255,0.04);
 
-  /* Border Radius */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  /* ── Font Families ────────────────────────────────── */
+  --font-primary: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:    "JetBrains Mono", "Fira Code", monospace;
+  --font-heading: Inter, "SF Pro Display", sans-serif;
 
-  /* Animations */
-  --animate-pulse-glow: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --animate-slide-up: slide-up 0.3s ease-out;
-  --animate-float: float 3s ease-in-out infinite;
-  --animate-shimmer: shimmer 2s linear infinite;
-  --animate-shake: shake 0.5s ease-in-out;
+  /* ── Font Sizes (includes 2xs and sm at 13px) ─────── */
+  --text-2xs:  0.6875rem;   /* 11px */
+  --text-xs:   0.75rem;     /* 12px */
+  --text-sm:   0.8125rem;   /* 13px */
+  --text-base: 0.875rem;    /* 14px */
+  --text-md:   1rem;        /* 16px */
+  --text-lg:   1.125rem;    /* 18px */
+  --text-xl:   1.25rem;     /* 20px */
+  --text-2xl:  1.5rem;      /* 24px */
+  --text-3xl:  1.875rem;    /* 30px */
+  --text-4xl:  2.25rem;     /* 36px */
+  --text-5xl:  3rem;        /* 48px */
 
-  @keyframes pulse-glow {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; box-shadow: 0 0 20px rgba(0, 245, 255, 0.5); }
-  }
-  @keyframes slide-up {
-    0% { transform: translateY(10px); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
-  }
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-  }
-  @keyframes shimmer {
-    0% { background-position: -1000px 0; }
-    100% { background-position: 1000px 0; }
-  }
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-  }
+  /* ── Border Radius ────────────────────────────────── */
+  --radius-sm:   0.375rem;  /*  6px */
+  --radius-md:   0.5rem;    /*  8px */
+  --radius-lg:   0.625rem;  /* 10px — inputs */
+  --radius-xl:   0.75rem;   /* 12px */
+  --radius-2xl:  1rem;      /* 16px */
+  --radius-card: 1.25rem;   /* 20px — glass card */
+  --radius-full: 9999px;
+
+  /* ── Box Shadows ──────────────────────────────────── */
+  --shadow-glow-cyan:         0 0 0 3px rgba(0,200,255,0.12);
+  --shadow-glow-primary:      0 4px 20px rgba(0,150,255,0.4);
+  --shadow-glow-primary-hover:0 6px 28px rgba(0,150,255,0.65);
+  --shadow-glow-card:         0 0 50px rgba(0,100,220,0.18), 0 0 100px rgba(80,30,180,0.1);
+  --shadow-glow-logo:         0 0 14px rgba(0,100,220,0.5);
+  --shadow-glow-orbit:        0 0 12px rgba(0,200,255,0.9);
 }
 
-@layer base {
-  :root {
-    --background: var(--color-bg-main);
-    --foreground: #FFFFFF;
-  }
-
-  body {
-    background-color: var(--color-bg-main);
-    color: white;
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    min-height: 100vh;
-  }
-
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: var(--color-bg-card);
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-bg-input);
-    border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-primary);
-  }
+/* ── Global Base Styles ──────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@layer components {
-  /* Glass Morphism */
-  .glass {
-    backdrop-filter: blur(12px);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  /* Gradient text for balance and branding */
-  .gradient-text {
-    background: linear-gradient(to right, var(--color-primary-light), var(--color-accent-cyan));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* Glow effects */
-  .ai-glow {
-    box-shadow: 0 0 15px rgba(0, 245, 255, 0.3);
-  }
-  .blockchain-glow {
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
-  }
-
-  /* Button Components */
-  .btn-primary {
-    background-color: var(--color-primary);
-    color: white;
-    font-weight: 600;
-    padding: var(--spacing-2) var(--spacing-4);
-    border-radius: var(--radius-md);
-    transition: all 0.3s ease;
-  }
-  .btn-primary:hover {
-    background-color: var(--color-primary-dark);
-  }
-
-  .btn-secondary {
-    background-color: transparent;
-    border: 1px solid var(--color-accent-cyan);
-    color: var(--color-accent-cyan);
-    font-weight: 600;
-    padding: var(--spacing-2) var(--spacing-4);
-    border-radius: var(--radius-md);
-    transition: all 0.3s ease;
-  }
-  .btn-secondary:hover {
-    background-color: rgba(0, 245, 255, 0.1);
-  }
-
-  .btn-danger {
-    background-color: rgba(255, 59, 92, 0.1);
-    border: 1px solid var(--color-status-danger);
-    color: var(--color-status-danger);
-    font-weight: 600;
-    padding: var(--spacing-2) var(--spacing-4);
-    border-radius: var(--radius-md);
-    transition: all 0.3s ease;
-  }
-  .btn-danger:hover {
-    background-color: rgba(255, 59, 92, 0.2);
-  }
-
-  /* Card Component */
-  .card {
-    background-color: var(--color-bg-card);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-6);
-    transition: all 0.3s ease;
-  }
-  .card:hover {
-    border-color: rgba(10, 102, 194, 0.3);
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-  }
-
-  /* Input Component */
-  .input-field {
-    background-color: var(--color-bg-input);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    padding: var(--spacing-3);
-    border-radius: var(--radius-sm);
-    outline: none;
-    transition: all 0.3s ease;
-  }
-  .input-field:focus {
-    border-color: var(--color-accent-cyan);
-    box-shadow: 0 0 0 2px rgba(0, 245, 255, 0.2);
-  }
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-guardian-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-primary);
 }
+
+/* ── Keyframe Animations ─────────────────────────────────── */
+@keyframes spin-slow {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes spin-rev {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg);   }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 1;    }
+}
+
+@keyframes orb-float {
+  0%, 100% { transform: translateY(0);     }
+  50%       { transform: translateY(-10px); }
+}
+
+/* ── Animation Utility Classes ───────────────────────────── */
+.anim-spin-slow   { animation: spin-slow   22s linear infinite; }
+.anim-spin-rev    { animation: spin-rev    14s linear infinite; }
+.anim-pulse-glow  { animation: pulse-glow   3s ease-in-out infinite; }
+.anim-float       { animation: orb-float    4s ease-in-out infinite; }
+
+/* ── Hide scrollbars globally (optional, remove if unwanted) */
+.scrollbar-hidden::-webkit-scrollbar { display: none; }
+.scrollbar-hidden { scrollbar-width: none; }
