@@ -6,7 +6,7 @@ import helmet from 'helmet';
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 app.use(helmet()); 
 app.use(cors()); 
 app.use(express.json()); 
@@ -23,7 +23,7 @@ app.use((req: Request, res: Response) => {
 });
 
 const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  console.log(`API Gateway running on port ${PORT} in ${process.env.NODE_ENV} mode`);
 });
 
 process.on('unhandledRejection', (err: Error) => {
