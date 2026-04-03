@@ -27,24 +27,13 @@ export { default as FraudExplanation } from './fraud-shield/components/FraudExpl
 export { default as OverrideButton } from './fraud-shield/components/OverrideButton';
 export { default as FraudTimeline } from './fraud-shield/components/FraudTimeline';
 export { default as UserFeedbackButtons } from './fraud-shield/components/UserFeedbackButtons';
-export { default as TransactionGraph } from './blockchain-explorer/components/TransactionGraph';
-export { default as BlockchainRecord } from './blockchain-explorer/components/BlockchainRecord';
-export { default as AuditTrailTable } from './blockchain-explorer/components/AuditTrailTable';
-export { default as HashVerifier } from './blockchain-explorer/components/HashVerifier';
-export { default as ExportComplianceButton } from './blockchain-explorer/components/ExportComplianceButton';
+
 export { default as SpendingHeatmap } from './analytics/components/SpendingHeatmap';
 export { default as CategoryBreakdown } from './analytics/components/CategoryBreakdown';
 export { default as FraudTrendLine } from './analytics/components/FraudTrendLine';
 export { default as FinancialHealthScore } from './analytics/components/FinancialHealthScore';
 export { default as InsightsList } from './analytics/components/InsightsList';
-export { default as WebSocketProvider } from './websocket/components/WebSocketProvider';
-export { default as LiveFraudAlert } from './websocket/components/LiveFraudAlert';
-export { default as TransactionStatus } from './websocket/components/TransactionStatus';
-export { default as EdgeFraudDetector } from './tensorflow/components/EdgeFraudDetector';
-export { default as BehaviorAnalyzer } from './tensorflow/components/BehaviorAnalyzer';
-export { default as useChat } from './vercel-ai/components/useChat';
-export { default as AIProvider } from './vercel-ai/components/AIProvider';
-// Chat Module
+
 export { default as ChatWindow } from './chat/components/ChatWindow';
 export { default as ChatHistory } from './chat/components/ChatHistory';
 export { default as Message } from './chat/components/Message';

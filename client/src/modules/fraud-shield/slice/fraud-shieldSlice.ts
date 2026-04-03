@@ -1,9 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const fraud-shieldSlice = createSlice({
+const fraudshieldSlice = createSlice({
   name: 'fraud-shield',
   initialState: {},
   reducers: {},
 });
 
-export default fraud-shieldSlice.reducer;
+export default fraudshieldSlice.reducer;
