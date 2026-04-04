@@ -6,7 +6,11 @@
     "start": "node dist/server.js",
     "dev": "nodemon",
     "build": "tsc",
-    "prod": "npm run build && npm start"
+    "prod": "npm run build && npm start",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "keywords": [],
   "author": "",
@@ -15,9 +19,11 @@
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
+    "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "mongoose": "^9.3.0",
+    "postgres": "^3.4.8",
     "zod": "^3.21.4"
   },
   "devDependencies": {
@@ -25,6 +31,8 @@
     "@types/express": "^5.0.6",
     "@types/mongoose": "^5.11.96",
     "@types/node": "^25.5.0",
+    "@types/pg": "^8.20.0",
+    "drizzle-kit": "^0.31.10",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

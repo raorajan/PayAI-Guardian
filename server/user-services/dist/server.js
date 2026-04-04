@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
+const database_1 = require("./config/database");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 8001;
@@ -23,8 +24,9 @@ app.use((req, res) => {
         message: 'Route not found',
     });
 });
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
     console.log(`User Service running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+    await (0, database_1.connectDB)();
 });
 process.on('unhandledRejection', (err) => {
     console.log('UNHANDLED REJECTION! 💥 Shutting down...');

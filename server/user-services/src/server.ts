@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
+import { connectDB } from './config/database';
 
 dotenv.config();
 
@@ -22,9 +23,11 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`User Service running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  await connectDB();
 });
+
 
 process.on('unhandledRejection', (err: Error) => {
   console.log('UNHANDLED REJECTION! 💥 Shutting down...');
