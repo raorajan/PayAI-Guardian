@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import { connectDB } from './config/database';
+import authRoutes from './routes/auth.routes';
 
 dotenv.config();
 
@@ -15,6 +16,9 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Welcome to User Service' });
 });
+
+// Auth routes
+app.use('/auth', authRoutes);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({

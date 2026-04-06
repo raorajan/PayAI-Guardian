@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node dist/server.js",
     "dev": "nodemon",
+    "dev:watch": "concurrently \"tsc -w\" \"nodemon --watch dist --exec 'node dist/server.js'\"",
     "build": "tsc",
     "prod": "npm run build && npm start"
   },
@@ -18,6 +19,8 @@
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "mongoose": "^9.3.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "zod": "^3.21.4"
   },
   "devDependencies": {
@@ -25,6 +28,7 @@
     "@types/express": "^5.0.6",
     "@types/mongoose": "^5.11.96",
     "@types/node": "^25.5.0",
+    "concurrently": "^7.6.0",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

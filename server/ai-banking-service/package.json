@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node dist/server.js",
     "dev": "nodemon",
+    "dev:watch": "concurrently \"tsc -w\" \"nodemon --watch dist --exec 'node dist/server.js'\"",
     "build": "tsc",
     "prod": "npm run build && npm start"
   },
@@ -26,6 +27,7 @@
     "@types/mongoose": "^5.11.96",
     "@types/node": "^25.5.0",
     "nodemon": "^3.1.14",
+    "concurrently": "^7.6.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
