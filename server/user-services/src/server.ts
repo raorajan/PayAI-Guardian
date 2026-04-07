@@ -18,7 +18,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // Auth routes
-app.use('/auth', authRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({

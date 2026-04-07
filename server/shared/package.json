@@ -6,6 +6,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "exports": {
+    "./utils/*": "./utils/*.js",
+    "./migration/*": "./migration/*.js",
+    "./middleware/*": "./middleware/*.js"
+  },
   "dependencies": {
     "jsonwebtoken": "^9.0.0",
     "bcryptjs": "^2.4.3",

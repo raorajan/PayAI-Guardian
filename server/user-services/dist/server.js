@@ -8,6 +8,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const database_1 = require("./config/database");
+const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 8001;
@@ -18,6 +19,8 @@ app.use(express_1.default.urlencoded({ extended: true }));
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to User Service' });
 });
+// Auth routes
+app.use('/auth', auth_routes_1.default);
 app.use((req, res) => {
     res.status(404).json({
         success: false,
