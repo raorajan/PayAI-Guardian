@@ -1,8 +1,8 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/redux/store';
-import { registerUser, clearError, clearMessage } from '../slice/authSlice';
+import { registerUser, clearAuthState } from '../slice/authSlice';
 import { useToast } from '@/hooks/useToast';
 
 interface RegisterFormProps {
@@ -12,103 +12,59 @@ interface RegisterFormProps {
 export default function RegisterForm({ setView }: RegisterFormProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { loading, error, message } = useAppSelector((state) => state.auth);
+  const { loading } = useAppSelector((state) => state.auth);
   const toast = useToast();
-  const hasShownSuccessRef = useRef(false);
-  const hasShownErrorRef = useRef(false);
   
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [focused, setFocused] = useState<string | null>(null);
   const [showPwd, setShowPwd] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [registered, setRegistered] = useState(false);
 
   // Clear errors when component mounts
   useEffect(() => {
-    dispatch(clearError());
-    dispatch(clearMessage());
-    setFormError(null);
-    setRegistered(false);
-    hasShownSuccessRef.current = false;
-    hasShownErrorRef.current = false;
+    dispatch(clearAuthState());
   }, [dispatch]);
-
-  // Handle success
-  useEffect(() => {
-    if (message && !error && !registered && !hasShownSuccessRef.current) {
-      hasShownSuccessRef.current = true;
-      setRegistered(true);
-      // Show success toast
-      toast.success(message || 'Registration successful! Please check your email.');
-      
-      // Redirect to signin after 2 seconds
-      const timeout = setTimeout(() => {
-        // Try multiple redirect methods for reliability
-        if (setView) {
-          setView('signin');
-        }
-        // Also try Next.js router
-        router.push('/auth');
-        // Fallback: window location
-        setTimeout(() => {
-          if (window.location.pathname !== '/auth') {
-            window.location.href = '/auth';
-          }
-        }, 500);
-      }, 2000);
-      return () => clearTimeout(timeout);
-    }
-  }, [message, error, registered, setView, toast, router]);
-
-  // Show error toast
-  useEffect(() => {
-    if (error && !hasShownErrorRef.current) {
-      hasShownErrorRef.current = true;
-      toast.error(error);
-    }
-  }, [error, toast]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFormData({ ...formData, [e.target.id]: e.target.value });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null); 
 
     if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
-      const errorMsg = 'Please fill in all fields';
-      setFormError(errorMsg);
-      toast.error(errorMsg);
+      toast.error('Please fill in all fields');
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      const errorMsg = 'Passwords do not match';
-      setFormError(errorMsg);
-      toast.error(errorMsg);
+      toast.error('Passwords do not match');
       return;
     }
 
     if (formData.password.length < 6) {
-      const errorMsg = 'Password must be at least 6 characters';
-      setFormError(errorMsg);
-      toast.error(errorMsg);
+      toast.error('Password must be at least 6 characters');
       return;
     }
 
-    // Reset the ref to allow error display for new submission
-    hasShownErrorRef.current = false;
-
     try {
-      const result = await dispatch(registerUser({ 
+      await dispatch(registerUser({ 
         fullName: formData.name, 
         email: formData.email, 
         password: formData.password 
       })).unwrap();
+      
+      // Success - show toast and redirect
+      toast.success('Registration successful! Please check your email.');
+      
+      setTimeout(() => {
+        if (setView) {
+          setView('signin');
+        } else {
+          router.push('/auth');
+        }
+      }, 1500);
     } catch (err: any) {
-      console.error('Registration error:', err);
-      // The error will be displayed via the useEffect that watches the error state
-      // Don't set formError here as it's handled by Redux state
+      const errorMsg = err?.message || 'Registration failed. Please try again.';
+      toast.error(errorMsg);
     }
   };
 
@@ -198,9 +154,9 @@ export default function RegisterForm({ setView }: RegisterFormProps) {
         </div>
 
         {/* Submit */}
-        <button type="submit" disabled={loading || registered}
+        <button type="submit" disabled={loading}
           className={`w-full mt-1 py-[13px] font-bold text-sm text-white rounded-[10px] border-none cursor-pointer transition-shadow duration-200 ${
-            loading || registered
+            loading
               ? 'opacity-60 cursor-not-allowed'
               : 'hover:shadow-[0_6px_28px_rgba(0,150,255,0.65)] shadow-[0_4px_20px_rgba(0,150,255,0.4)]'
           }`}
@@ -213,14 +169,7 @@ export default function RegisterForm({ setView }: RegisterFormProps) {
               </svg>
               <span>Creating Account...</span>
             </div>
-          ) : registered ? (
-            <div className="flex items-center justify-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
-              </svg>
-              <span>Account Created!</span>
-            </div>
-          ) : (
+          ): (
             <span>Create Secure Account</span>
           )}
         </button>

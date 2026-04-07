@@ -5,9 +5,7 @@ import jwt from 'jsonwebtoken';
 import { db } from '../config/database';
 import { users } from '../models';
 import { eq, or } from 'drizzle-orm';
-// @ts-ignore
 import sendEmail from 'shared/utils/sendEmail';
-// @ts-ignore
 import awaitHandlerFactory from 'shared/middleware/awaitHandlerFactory.middleware';
 
 export const register = awaitHandlerFactory(async (req: Request, res: Response) => {
@@ -37,7 +35,7 @@ export const register = awaitHandlerFactory(async (req: Request, res: Response) 
 
   // Send verification email
   const verificationToken = jwt.sign({ userId: created.id }, process.env.JWT_SECRET!, { expiresIn: '24h' });
-  const verificationLink = `${process.env.AUTH_SERVICE_URL}/api/v1/verify?token=${verificationToken}`;
+  const verificationLink = `${process.env.API_GATEWAY_URL}/api/v1/verify?token=${verificationToken}`;
   
   await sendEmail({
     from: 'Welcome To PayAI <welcome@raorajan.pro>',
@@ -104,7 +102,7 @@ export const login = awaitHandlerFactory(async (req: Request, res: Response) => 
   // Check if email is verified
   if (!(user as any).isVerified) {
     const verificationToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, { expiresIn: '24h' });
-    const verificationLink = `${process.env.AUTH_SERVICE_URL}/api/v1/verify?token=${verificationToken}`;
+    const verificationLink = `${process.env.API_GATEWAY_URL}/api/v1/verify?token=${verificationToken}`;
     
     await sendEmail({
       from: 'Security PayAI <security@raorajan.pro>',
@@ -181,7 +179,7 @@ export const forgotPassword = awaitHandlerFactory(async (req: Request, res: Resp
 
   // Use shared sendEmail utility
   try {
-    const resetLink = `${process.env.AUTH_SERVICE_URL}/api/v1/reset-password?token=${token}`;
+    const resetLink = `${process.env.API_GATEWAY_URL}/api/v1/reset-password?token=${token}`;
     
     await sendEmail({
       from: 'Auth PayAI <auth@raorajan.pro>',
@@ -203,7 +201,7 @@ export const forgotPassword = awaitHandlerFactory(async (req: Request, res: Resp
   } catch (sendErr) {
     console.error('email send error', sendErr);
     // dev fallback: return link so the developer can complete the flow
-    const resetLink = `${process.env.AUTH_SERVICE_URL}/api/v1/reset-password?token=${token}`;
+    const resetLink = `${process.env.API_GATEWAY_URL}/api/v1/reset-password?token=${token}`;
     return res.status(200).json({ 
       status: 'success',
       statusCode: 200,

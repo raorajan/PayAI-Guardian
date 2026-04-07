@@ -1,7 +1,7 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/redux/store';
-import { forgetPassword, clearError, clearMessage } from '../slice/authSlice';
+import { forgetPassword, clearAuthState } from '../slice/authSlice';
 import { useToast } from '@/hooks/useToast';
 
 interface ForgotPasswordProps {
@@ -10,65 +10,43 @@ interface ForgotPasswordProps {
 
 export default function ForgotPassword({ setView }: ForgotPasswordProps) {
   const dispatch = useAppDispatch();
-  const { loading, error, message } = useAppSelector((state) => state.auth);
+  const { loading } = useAppSelector((state) => state.auth);
   const toast = useToast();
-  const hasShownSuccessRef = useRef(false);
-  const hasShownErrorRef = useRef(false);
-  
   const [email, setEmail] = useState('');
   const [focused, setFocused] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
 
   // Clear errors when component mounts
   useEffect(() => {
-    dispatch(clearError());
-    dispatch(clearMessage());
-    setFormError(null);
+    dispatch(clearAuthState());
     setEmailSent(false);
-    hasShownSuccessRef.current = false;
-    hasShownErrorRef.current = false;
   }, [dispatch]);
-
-  // Handle success
-  useEffect(() => {
-    if (message && !error && !emailSent && !hasShownSuccessRef.current) {
-      hasShownSuccessRef.current = true;
-      setEmailSent(true);
-      toast.success(message || 'Reset link sent! Check your email.');
-    }
-  }, [message, error, emailSent, toast]);
-
-  // Show error toast
-  useEffect(() => {
-    if (error && !hasShownErrorRef.current) {
-      hasShownErrorRef.current = true;
-      toast.error(error);
-    }
-  }, [error, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null);
     
     // Validation
     if (!email) {
-      setFormError('Please enter your email address');
+      toast.error('Please enter your email address');
       return;
     }
 
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setFormError('Please enter a valid email address');
+      toast.error('Please enter a valid email address');
       return;
     }
 
     try {
       await dispatch(forgetPassword({ email })).unwrap();
+      
+      // Success - show toast and update UI
+      setEmailSent(true);
+      toast.success('Reset link sent! Check your email.');
     } catch (err: any) {
-      // Error will be handled by the useEffect above
-      setFormError(err || 'Failed to send reset email. Please try again.');
+      const errorMsg = err?.message || 'Failed to send reset email. Please try again.';
+      toast.error(errorMsg);
     }
   };
 

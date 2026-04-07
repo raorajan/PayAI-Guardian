@@ -25,9 +25,14 @@ export const loginUser = createAsyncThunk(
   async (data: any, { rejectWithValue }) => {
     try {
       const response: any = await authAction.loginUser(data);
-      // Backend returns { status: 'success', success: true, message: '...', data: { token, user } }
-      if (response.data?.data?.token) setToken(response.data.data.token);
-      return response.data || response;
+      const responseData = response.data || response;
+      
+      // Extract token from nested data structure
+      if (responseData?.data?.token) {
+        setToken(responseData.data.token);
+      }
+      
+      return responseData;
     } catch (error: any) {
       return rejectWithValue(
         error?.response?.data?.message || error?.response?.data || { message: "Login failed" }
@@ -42,7 +47,6 @@ export const registerUser = createAsyncThunk(
     try {
       const response: any = await authAction.registerUser(data);
       return response.data || response;
-      
     } catch (error: any) {
       // Extract error message from various response formats
       const errorMessage = 
@@ -61,10 +65,10 @@ export const verifyEmail = createAsyncThunk(
   async (token: string, { rejectWithValue }) => {
     try {
       const response: any = await authAction.emailVerification(token);
-      return response.data;
+      return response.data || response;
     } catch (error: any) {
       return rejectWithValue(
-        error?.response?.data || { message: "Email verification failed" }
+        error?.response?.data?.message || error?.response?.data || { message: "Email verification failed" }
       );
     }
   }
@@ -75,10 +79,11 @@ export const forgetPassword = createAsyncThunk(
   async (data: any, { rejectWithValue }) => {
     try {
       const response: any = await authAction.forgetPassword(data);
-      // Backend returns { success: true, message: '...' }
       return response.data || response;
     } catch (error: any) {
-      return rejectWithValue(error?.response?.data?.message || error?.response?.data || { message: "Forgot password failed" });
+      return rejectWithValue(
+        error?.response?.data?.message || error?.response?.data || { message: "Forgot password failed" }
+      );
     }
   }
 );
@@ -88,9 +93,11 @@ export const resetPassword = createAsyncThunk(
   async (params: any, { rejectWithValue }) => {
     try {
       const response: any = await authAction.resetPassword(params);
-      return response.data;
+      return response.data || response;
     } catch (error: any) {
-      return rejectWithValue(error?.response?.data || { message: "Reset password failed" });
+      return rejectWithValue(
+        error?.response?.data?.message || error?.response?.data || { message: "Reset password failed" }
+      );
     }
   }
 );
@@ -101,12 +108,6 @@ const auth = createSlice({
   reducers: {
     clearAuthState: (state) => {
       state.error = null;
-      state.message = null;
-    },
-    clearError: (state) => {
-      state.error = null;
-    },
-    clearMessage: (state) => {
       state.message = null;
     },
     logout: (state) => {
@@ -126,10 +127,10 @@ const auth = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        // Extract user from response.data.user
-        state.user = action.payload?.data?.user || action.payload?.user || action.payload;
+        const payload = action.payload;
+        state.user = payload?.data?.user || payload?.user || null;
         state.isAuthenticated = true;
-        state.message = action.payload?.message || "Login successful";
+        state.message = payload?.message || "Login successful";
       })
       .addCase(loginUser.rejected, (state, action: any) => {
         state.loading = false;
@@ -143,7 +144,7 @@ const auth = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.message = action.payload.message || "Registration successful";
+        state.message = action.payload?.message || "Registration successful";
       })
       .addCase(registerUser.rejected, (state, action: any) => {
         state.loading = false;
@@ -156,7 +157,7 @@ const auth = createSlice({
       })
       .addCase(verifyEmail.fulfilled, (state, action) => {
         state.loading = false;
-        state.message = action.payload.message || "Email verified successfully";
+        state.message = action.payload?.message || "Email verified successfully";
       })
       .addCase(verifyEmail.rejected, (state, action: any) => {
         state.loading = false;
@@ -169,7 +170,7 @@ const auth = createSlice({
       })
       .addCase(forgetPassword.fulfilled, (state, action) => {
         state.loading = false;
-        state.message = action.payload.message || "Reset link sent";
+        state.message = action.payload?.message || "Reset link sent";
       })
       .addCase(forgetPassword.rejected, (state, action: any) => {
         state.loading = false;
@@ -182,7 +183,7 @@ const auth = createSlice({
       })
       .addCase(resetPassword.fulfilled, (state, action) => {
         state.loading = false;
-        state.message = action.payload.message || "Password reset successful";
+        state.message = action.payload?.message || "Password reset successful";
       })
       .addCase(resetPassword.rejected, (state, action: any) => {
         state.loading = false;
@@ -191,5 +192,5 @@ const auth = createSlice({
   },
 });
 
-export const { clearAuthState, clearError, clearMessage, logout } = auth.actions;
+export const { clearAuthState, logout } = auth.actions;
 export default auth.reducer;

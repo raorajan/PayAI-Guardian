@@ -1,7 +1,7 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/redux/store';
-import { loginUser, clearError, clearMessage } from '../slice/authSlice';
+import { loginUser, clearAuthState } from '../slice/authSlice';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
 
@@ -12,64 +12,39 @@ interface LoginFormProps {
 export default function LoginForm({ setView }: LoginFormProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { loading, error, message } = useAppSelector((state) => state.auth);
+  const { loading } = useAppSelector((state) => state.auth);
   const toast = useToast();
-  const hasShownSuccessRef = useRef(false);
-  const hasShownErrorRef = useRef(false);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
 
   // Clear errors when component mounts
   useEffect(() => {
-    dispatch(clearError());
-    dispatch(clearMessage());
-    setFormError(null);
-    hasShownSuccessRef.current = false;
-    hasShownErrorRef.current = false;
+    dispatch(clearAuthState());
   }, [dispatch]);
-
-  // Handle success navigation
-  useEffect(() => {
-    if (message && !error && !hasShownSuccessRef.current) {
-      hasShownSuccessRef.current = true;
-      // Show success toast
-      toast.success(message || 'Login successful!');
-      
-      // Redirect to home page
-      const timeout = setTimeout(() => {
-        router.push('/');
-      }, 800);
-      return () => clearTimeout(timeout);
-    }
-  }, [message, error, router, toast]);
-
-  // Show error toast
-  useEffect(() => {
-    if (error && !hasShownErrorRef.current) {
-      hasShownErrorRef.current = true;
-      toast.error(error);
-    }
-  }, [error, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null);
     
     // Validation
     if (!email || !password) {
-      setFormError('Please fill in all fields');
+      toast.error('Please fill in all fields');
       return;
     }
 
     try {
       await dispatch(loginUser({ email, password })).unwrap();
+      
+      // Success - show toast and redirect
+      toast.success('Login successful!');
+      setTimeout(() => {
+        router.push('/');
+      }, 800);
     } catch (err: any) {
-      // Error will be handled by the useEffect above
-      setFormError(err || 'Login failed. Please try again.');
+      const errorMsg = err?.message || 'Login failed. Please try again.';
+      toast.error(errorMsg);
     }
   };
 

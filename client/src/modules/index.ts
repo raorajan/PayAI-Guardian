@@ -42,7 +42,7 @@ export { default as ChatInput } from './chat/components/ChatInput';
 export { default as LoginForm } from './auth/components/LoginForm';
 export { default as RegisterForm } from './auth/components/RegisterForm';
 export { default as ForgotPassword } from './auth/components/ForgotPassword';
-export { default as AuthGuard } from './auth/components/AuthGuard';
+export { default as ResetPassword } from './auth/components/ResetPassword';
 // Settings Module
 export { default as ProfileSettings } from './settings/components/ProfileSettings';
 export { default as SecuritySettings } from './settings/components/SecuritySettings';
