@@ -1,21 +1,115 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAppDispatch, useAppSelector } from '@/redux/store';
+import { registerUser, clearError, clearMessage } from '../slice/authSlice';
+import { useToast } from '@/hooks/useToast';
 
 interface RegisterFormProps {
   setView?: (view: 'signin' | 'signup' | 'forgot') => void;
 }
 
 export default function RegisterForm({ setView }: RegisterFormProps) {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { loading, error, message } = useAppSelector((state) => state.auth);
+  const toast = useToast();
+  const hasShownSuccessRef = useRef(false);
+  const hasShownErrorRef = useRef(false);
+  
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [focused, setFocused] = useState<string | null>(null);
   const [showPwd, setShowPwd] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [registered, setRegistered] = useState(false);
+
+  // Clear errors when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+    dispatch(clearMessage());
+    setFormError(null);
+    setRegistered(false);
+    hasShownSuccessRef.current = false;
+    hasShownErrorRef.current = false;
+  }, [dispatch]);
+
+  // Handle success
+  useEffect(() => {
+    if (message && !error && !registered && !hasShownSuccessRef.current) {
+      hasShownSuccessRef.current = true;
+      setRegistered(true);
+      // Show success toast
+      toast.success(message || 'Registration successful! Please check your email.');
+      
+      // Redirect to signin after 2 seconds
+      const timeout = setTimeout(() => {
+        // Try multiple redirect methods for reliability
+        if (setView) {
+          setView('signin');
+        }
+        // Also try Next.js router
+        router.push('/auth');
+        // Fallback: window location
+        setTimeout(() => {
+          if (window.location.pathname !== '/auth') {
+            window.location.href = '/auth';
+          }
+        }, 500);
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [message, error, registered, setView, toast, router]);
+
+  // Show error toast
+  useEffect(() => {
+    if (error && !hasShownErrorRef.current) {
+      hasShownErrorRef.current = true;
+      toast.error(error);
+    }
+  }, [error, toast]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFormData({ ...formData, [e.target.id]: e.target.value });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Register:', formData);
+    setFormError(null); 
+
+    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+      const errorMsg = 'Please fill in all fields';
+      setFormError(errorMsg);
+      toast.error(errorMsg);
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      const errorMsg = 'Passwords do not match';
+      setFormError(errorMsg);
+      toast.error(errorMsg);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      const errorMsg = 'Password must be at least 6 characters';
+      setFormError(errorMsg);
+      toast.error(errorMsg);
+      return;
+    }
+
+    // Reset the ref to allow error display for new submission
+    hasShownErrorRef.current = false;
+
+    try {
+      const result = await dispatch(registerUser({ 
+        fullName: formData.name, 
+        email: formData.email, 
+        password: formData.password 
+      })).unwrap();
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      // The error will be displayed via the useEffect that watches the error state
+      // Don't set formError here as it's handled by Redux state
+    }
   };
 
   const inputWrapper = (field: string) =>
@@ -104,13 +198,33 @@ export default function RegisterForm({ setView }: RegisterFormProps) {
         </div>
 
         {/* Submit */}
-        <button type="submit"
-          className="w-full mt-1 py-[13px] font-bold text-sm text-white rounded-[10px] border-none cursor-pointer transition-shadow duration-200 hover:shadow-[0_6px_28px_rgba(0,150,255,0.65)] shadow-[0_4px_20px_rgba(0,150,255,0.4)]"
+        <button type="submit" disabled={loading || registered}
+          className={`w-full mt-1 py-[13px] font-bold text-sm text-white rounded-[10px] border-none cursor-pointer transition-shadow duration-200 ${
+            loading || registered
+              ? 'opacity-60 cursor-not-allowed'
+              : 'hover:shadow-[0_6px_28px_rgba(0,150,255,0.65)] shadow-[0_4px_20px_rgba(0,150,255,0.4)]'
+          }`}
           style={{ background: 'linear-gradient(135deg,#0A66C2 0%,#00C8FF 100%)' }}>
-          Create Secure Account
+          {loading ? (
+            <div className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Creating Account...</span>
+            </div>
+          ) : registered ? (
+            <div className="flex items-center justify-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Account Created!</span>
+            </div>
+          ) : (
+            <span>Create Secure Account</span>
+          )}
         </button>
       </form>
-
       {/* Divider */}
       <div className="flex items-center gap-2.5">
         <div className="flex-1 h-px bg-white/[0.08]" />

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import ReduxProvider from "@/components/ReduxProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -32,7 +33,9 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ReduxProvider>{children}</ReduxProvider>
+      </body>
     </html>
   );
 }

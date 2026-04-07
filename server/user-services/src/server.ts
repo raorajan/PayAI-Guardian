@@ -10,7 +10,8 @@ dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 8001;
 app.use(helmet()); 
-app.use(cors()); 
+// CORS is handled by API Gateway - disable here to prevent conflicts
+// app.use(cors()); 
 app.use(express.json()); 
 app.use(express.urlencoded({ extended: true })); 
 app.get('/', (req: Request, res: Response) => {

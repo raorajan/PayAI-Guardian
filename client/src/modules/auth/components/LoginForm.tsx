@@ -1,19 +1,76 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useAppDispatch, useAppSelector } from '@/redux/store';
+import { loginUser, clearError, clearMessage } from '../slice/authSlice';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/useToast';
 
 interface LoginFormProps {
   setView?: (view: 'signin' | 'signup' | 'forgot') => void;
 }
 
 export default function LoginForm({ setView }: LoginFormProps) {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { loading, error, message } = useAppSelector((state) => state.auth);
+  const toast = useToast();
+  const hasShownSuccessRef = useRef(false);
+  const hasShownErrorRef = useRef(false);
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Clear errors when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+    dispatch(clearMessage());
+    setFormError(null);
+    hasShownSuccessRef.current = false;
+    hasShownErrorRef.current = false;
+  }, [dispatch]);
+
+  // Handle success navigation
+  useEffect(() => {
+    if (message && !error && !hasShownSuccessRef.current) {
+      hasShownSuccessRef.current = true;
+      // Show success toast
+      toast.success(message || 'Login successful!');
+      
+      // Redirect to home page
+      const timeout = setTimeout(() => {
+        router.push('/');
+      }, 800);
+      return () => clearTimeout(timeout);
+    }
+  }, [message, error, router, toast]);
+
+  // Show error toast
+  useEffect(() => {
+    if (error && !hasShownErrorRef.current) {
+      hasShownErrorRef.current = true;
+      toast.error(error);
+    }
+  }, [error, toast]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login:', { email, password });
+    setFormError(null);
+    
+    // Validation
+    if (!email || !password) {
+      setFormError('Please fill in all fields');
+      return;
+    }
+
+    try {
+      await dispatch(loginUser({ email, password })).unwrap();
+    } catch (err: any) {
+      // Error will be handled by the useEffect above
+      setFormError(err || 'Login failed. Please try again.');
+    }
   };
 
   const inputWrapper = (field: string) =>
@@ -78,11 +135,27 @@ export default function LoginForm({ setView }: LoginFormProps) {
         </div>
 
         {/* Login button */}
-        <button type="submit"
-          className="w-full py-[13px] font-bold text-sm text-white rounded-[10px] border-none cursor-pointer transition-shadow duration-200 hover:shadow-[0_6px_28px_rgba(0,150,255,0.65)] shadow-[0_4px_20px_rgba(0,150,255,0.4)]"
+        <button type="submit" disabled={loading}
+          className={`w-full py-[13px] font-bold text-sm text-white rounded-[10px] border-none cursor-pointer transition-shadow duration-200 ${
+            loading 
+              ? 'opacity-60 cursor-not-allowed' 
+              : 'hover:shadow-[0_6px_28px_rgba(0,150,255,0.65)] shadow-[0_4px_20px_rgba(0,150,255,0.4)]'
+          }`}
           style={{ background: 'linear-gradient(135deg,#0A66C2 0%,#00C8FF 100%)' }}>
-          <div>Log In</div>
-          <div className="text-[11px] font-normal opacity-80 mt-[1px]">Secure Log In</div>
+          {loading ? (
+            <div className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Logging in...</span>
+            </div>
+          ) : (
+            <>
+              <div>Log In</div>
+              <div className="text-[11px] font-normal opacity-80 mt-[1px]">Secure Log In</div>
+            </>
+          )}
         </button>
       </form>
 
