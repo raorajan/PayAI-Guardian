@@ -18,12 +18,22 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // Auth routes
-app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1', authRoutes);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
     message: 'Route not found',
+  });
+});
+
+// Global error handler
+app.use((err: any, req: Request, res: Response, next: any) => {
+  console.error('SERVER ERROR:', err.stack || err);
+  const status = err.status || 500;
+  res.status(status).json({
+    success: false,
+    message: err.message || 'Internal Server Error',
   });
 });
 

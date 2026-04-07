@@ -59,11 +59,8 @@ const combinedDocs = {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(combinedDocs));
 
 // 3. Proxy Routes
-app.use('/api/v1/auth', proxy(API_USER_URL, {
-  proxyReqPathResolver: (req) => req.originalUrl
-}));
-
-app.use('/api/v1/user', proxy(API_USER_URL, {
+// Catch-all for /api/v1 to proxy to User Service
+app.use('/api/v1', proxy(API_USER_URL, {
   proxyReqPathResolver: (req) => req.originalUrl
 }));
 
