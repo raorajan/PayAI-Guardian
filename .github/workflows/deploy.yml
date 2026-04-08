@@ -1,4 +1,4 @@
-name: Deploy PayAI Guardian
+name: CI/CD - PayAI Guardian
 
 on:
   push:
@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main, master]
   workflow_dispatch: # Allow manual trigger
+
+# Note: Deployment steps are currently disabled until server is configured
+# To enable deployment, change all 'if: false' to the proper condition
 
 env:
   NODE_VERSION: '20'
@@ -40,7 +43,7 @@ jobs:
         run: npm run build
 
       - name: Deploy Frontend via SCP
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        if: false # Disabled until server is configured
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -90,7 +93,7 @@ jobs:
         run: npm run build:all
 
       - name: Deploy Backend via SCP
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        if: false # Disabled until server is configured
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -103,7 +106,7 @@ jobs:
           exclude: "node_modules,.env,*.log,dist"
 
       - name: Install Production Dependencies & Restart Services
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        if: false # Disabled until server is configured
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -220,7 +223,7 @@ jobs:
     name: Verify Deployment
     runs-on: ubuntu-latest
     needs: [frontend-deploy, backend-deploy]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: false # Disabled until server is configured
     
     steps:
       - name: Wait for Services to Start
