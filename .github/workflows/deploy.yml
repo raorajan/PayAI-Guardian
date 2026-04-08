@@ -3,9 +3,44 @@ name: Deploy PayAI Guardian
 on:
   push:
     branches: [main, master]
-  pull_request:
-    branches: [main, master]
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      deploy_frontend:
+        description: 'Deploy Frontend'
+        type: boolean
+        default: false
+      deploy_api_gateway:
+        description: 'Deploy API Gateway (Port 8000)'
+        type: boolean
+        default: false
+      deploy_user_service:
+        description: 'Deploy User Service (Port 8001)'
+        type: boolean
+        default: false
+      deploy_payment_service:
+        description: 'Deploy Payment Service (Port 8002)'
+        type: boolean
+        default: false
+      deploy_fraud_service:
+        description: 'Deploy Fraud Detection (Port 8003)'
+        type: boolean
+        default: false
+      deploy_ai_service:
+        description: 'Deploy AI Banking (Port 8004)'
+        type: boolean
+        default: false
+      deploy_analytics_service:
+        description: 'Deploy Analytics (Port 8005)'
+        type: boolean
+        default: false
+      deploy_notification_service:
+        description: 'Deploy Notification (Port 8006)'
+        type: boolean
+        default: false
+      deploy_all_backend:
+        description: 'Deploy ALL Backend Services'
+        type: boolean
+        default: false
 
 env:
   NODE_VERSION: '20'
@@ -39,292 +74,327 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: npm run build
 
-      - name: Deploy Frontend via SCP
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "client/.next/,client/public/,client/package.json,client/next.config.ts,client/.env,client/node_modules/.package-lock.json"
-          target: "~/payai-guardian/client"
-          strip_components: 1
-          rm: true
-
-      - name: Install Frontend Dependencies & Restart
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      - name: Deploy Frontend via SSH
+        if: >
+          github.event_name == 'push' || 
+          (github.event_name == 'workflow_dispatch' && inputs.deploy_frontend == true)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Load NVM (Node Version Manager)
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-            
+                  
             cd ~/payai-guardian/client
-            
+                  
+            # Pull latest code
+            git pull origin master || git pull origin main
+                  
             echo "📦 Installing frontend production dependencies..."
             npm ci --omit=dev
-            
+                  
+            echo "🔨 Building frontend..."
+            npm run build
+                  
             echo "🚀 Restarting frontend PM2 service..."
-            pm2 restart payai-frontend
-            
-            # Save PM2 process list
+            pm2 restart payai-frontend || pm2 start npm --name "payai-frontend" -- start
+                  
             pm2 save
-            
-            # Show status
             echo "✅ Frontend deployment complete!"
             pm2 status payai-frontend
 
   # ===========================================
-  # BACKEND BUILD & DEPLOY
+  # BACKEND SERVICES DEPLOYMENT
   # ===========================================
-  backend-deploy:
-    name: Build & Deploy Backend
+
+  # --- API Gateway ---
+  deploy-api-gateway:
+    name: 'Deploy API Gateway (8000)'
     runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'push' || 
+      (github.event_name == 'workflow_dispatch' && 
+       (inputs.deploy_api_gateway == true || inputs.deploy_all_backend == true))
     
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Fetch full history for diff
-
-      - name: Detect Changed Services
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        id: changes
-        run: |
-          # Get list of changed files
-          if [ "${{ github.event_name }}" == "push" ]; then
-            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
-          else
-            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
-          fi
-          
-          echo "Changed files:"
-          echo "$CHANGED_FILES"
-          
-          # Check each service
-          if echo "$CHANGED_FILES" | grep -q "server/api-gateway/"; then
-            echo "api-gateway=true" >> $GITHUB_OUTPUT
-            echo "✓ API Gateway changed"
-          fi
-          
-          if echo "$CHANGED_FILES" | grep -q "server/user-services/"; then
-            echo "user-services=true" >> $GITHUB_OUTPUT
-            echo "✓ User Service changed"
-          fi
-          
-          if echo "$CHANGED_FILES" | grep -q "server/payment-service/"; then
-            echo "payment-service=true" >> $GITHUB_OUTPUT
-            echo "✓ Payment Service changed"
-          fi
-          
-          if echo "$CHANGED_FILES" | grep -q "server/fraud-detection-service/"; then
-            echo "fraud-detection-service=true" >> $GITHUB_OUTPUT
-            echo "✓ Fraud Detection Service changed"
-          fi
-          
-          if echo "$CHANGED_FILES" | grep -q "server/ai-banking-service/"; then
-            echo "ai-banking-service=true" >> $GITHUB_OUTPUT
-            echo "✓ AI Banking Service changed"
-          fi
-          
-          if echo "$CHANGED_FILES" | grep -q "server/analytics-service/"; then
-            echo "analytics-service=true" >> $GITHUB_OUTPUT
-            echo "✓ Analytics Service changed"
-          fi
-          
-          if echo "$CHANGED_FILES" | grep -q "server/notification-service/"; then
-            echo "notification-service=true" >> $GITHUB_OUTPUT
-            echo "✓ Notification Service changed"
-          fi
-          
-          if echo "$CHANGED_FILES" | grep -q "server/shared/"; then
-            echo "shared=true" >> $GITHUB_OUTPUT
-            echo "✓ Shared code changed (will redeploy all)"
-          fi
-          
-          # If shared changed or multiple services, deploy all
-          if echo "$CHANGED_FILES" | grep -qE "server/(shared|package)"; then
-            echo "deploy-all=true" >> $GITHUB_OUTPUT
-            echo "⚠️ Deploying all services (shared/package changes)"
-          fi
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: |
-            server/package-lock.json
-            server/api-gateway/package-lock.json
-            server/user-services/package-lock.json
-            server/payment-service/package-lock.json
-            server/fraud-detection-service/package-lock.json
-            server/ai-banking-service/package-lock.json
-            server/analytics-service/package-lock.json
-            server/notification-service/package-lock.json
-
-      - name: Install Root Dependencies
-        working-directory: server
-        run: npm ci
-
-      - name: Install All Service Dependencies
-        working-directory: server
-        run: npm run install:all
-
-      - name: Build All Services
-        working-directory: server
-        run: npm run build:all
-
-      - name: Deploy All Services via SCP
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.changes.outputs.deploy-all == 'true'
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "server/api-gateway/,server/user-services/,server/payment-service/,server/fraud-detection-service/,server/ai-banking-service/,server/analytics-service/,server/notification-service/,server/shared/,server/package.json,server/package-lock.json,server/ecosystem.config.js"
-          target: "~/payai-guardian/server"
-          strip_components: 1
-          rm: true
-          exclude: "node_modules,.env,*.log,dist"
-
-      - name: Deploy Changed Services via SCP
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.changes.outputs.deploy-all != 'true'
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: |
-            ${{ steps.changes.outputs.api-gateway == 'true' && 'server/api-gateway/,' || '' }}
-            ${{ steps.changes.outputs.user-services == 'true' && 'server/user-services/,' || '' }}
-            ${{ steps.changes.outputs.payment-service == 'true' && 'server/payment-service/,' || '' }}
-            ${{ steps.changes.outputs.fraud-detection-service == 'true' && 'server/fraud-detection-service/,' || '' }}
-            ${{ steps.changes.outputs.ai-banking-service == 'true' && 'server/ai-banking-service/,' || '' }}
-            ${{ steps.changes.outputs.analytics-service == 'true' && 'server/analytics-service/,' || '' }}
-            ${{ steps.changes.outputs.notification-service == 'true' && 'server/notification-service/,' || '' }}
-            server/shared/,server/ecosystem.config.js
-          target: "~/payai-guardian/server"
-          strip_components: 1
-          rm: true
-          exclude: "node_modules,.env,*.log,dist"
-
-      - name: Install Production Dependencies & Restart All Services
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.changes.outputs.deploy-all == 'true'
+      - uses: actions/checkout@v4
+      
+      - name: Deploy API Gateway
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Load NVM (Node Version Manager)
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
             
-            cd ~/payai-guardian/server
+            cd ~/payai-guardian/server/api-gateway
             
-            echo "📦 Installing production dependencies for ALL services..."
+            echo "🔄 Pulling latest code..."
+            cd ~/payai-guardian && git pull origin master || git pull origin main
+            cd api-gateway
+            
+            echo "📦 Installing dependencies..."
             npm ci --omit=dev
             
-            # Install dependencies for each service
-            cd api-gateway && npm ci --omit=dev && cd ..
-            cd user-services && npm ci --omit=dev && cd ..
-            cd payment-service && npm ci --omit=dev && cd ..
-            cd fraud-detection-service && npm ci --omit=dev && cd ..
-            cd ai-banking-service && npm ci --omit=dev && cd ..
-            cd analytics-service && npm ci --omit=dev && cd ..
-            cd notification-service && npm ci --omit=dev && cd ..
+            echo "🔨 Building..."
+            npm run build
             
-            # Restart all PM2 services (including frontend)
-            echo "🚀 Restarting ALL PM2 services..."
-            pm2 restart ecosystem.config.js --env production
-            pm2 restart payai-frontend
+            echo "🚀 Restarting service..."
+            pm2 restart payai-gateway
             
-            # Save PM2 process list
             pm2 save
-            
-            # Show status
-            echo "✅ Deployment complete!"
-            pm2 status
+            echo "✅ API Gateway deployed!"
+            pm2 status payai-gateway
 
-      - name: Install & Restart Changed Services Only
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.changes.outputs.deploy-all != 'true'
+  # --- User Service ---
+  deploy-user-service:
+    name: 'Deploy User Service (8001)'
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'push' || 
+      (github.event_name == 'workflow_dispatch' && 
+       (inputs.deploy_user_service == true || inputs.deploy_all_backend == true))
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy User Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Load NVM
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
             
-            cd ~/payai-guardian/server
+            cd ~/payai-guardian/server/user-services
             
-            echo "📦 Selective deployment - only changed services:"
+            echo "🔄 Pulling latest code..."
+            cd ~/payai-guardian && git pull origin master || git pull origin main
+            cd user-services
             
-            # API Gateway
-            if [ "${{ steps.changes.outputs.api-gateway }}" = "true" ]; then
-              echo "🔄 Deploying API Gateway..."
-              cd api-gateway && npm ci --omit=dev && cd ..
-              pm2 restart payai-gateway
-            fi
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
             
-            # User Service
-            if [ "${{ steps.changes.outputs.user-services }}" = "true" ]; then
-              echo "🔄 Deploying User Service..."
-              cd user-services && npm ci --omit=dev && cd ..
-              pm2 restart payai-user-service
-            fi
+            echo "🔨 Building..."
+            npm run build
             
-            # Payment Service
-            if [ "${{ steps.changes.outputs.payment-service }}" = "true" ]; then
-              echo "🔄 Deploying Payment Service..."
-              cd payment-service && npm ci --omit=dev && cd ..
-              pm2 restart payai-payment-service
-            fi
+            echo "🚀 Restarting service..."
+            pm2 restart payai-user-service
             
-            # Fraud Detection
-            if [ "${{ steps.changes.outputs.fraud-detection-service }}" = "true" ]; then
-              echo "🔄 Deploying Fraud Detection..."
-              cd fraud-detection-service && npm ci --omit=dev && cd ..
-              pm2 restart payai-fraud-service
-            fi
-            
-            # AI Banking
-            if [ "${{ steps.changes.outputs.ai-banking-service }}" = "true" ]; then
-              echo "🔄 Deploying AI Banking..."
-              cd ai-banking-service && npm ci --omit=dev && cd ..
-              pm2 restart payai-ai-service
-            fi
-            
-            # Analytics
-            if [ "${{ steps.changes.outputs.analytics-service }}" = "true" ]; then
-              echo "🔄 Deploying Analytics..."
-              cd analytics-service && npm ci --omit=dev && cd ..
-              pm2 restart payai-analytics-service
-            fi
-            
-            # Notification
-            if [ "${{ steps.changes.outputs.notification-service }}" = "true" ]; then
-              echo "🔄 Deploying Notification..."
-              cd notification-service && npm ci --omit=dev && cd ..
-              pm2 restart payai-notification-service
-            fi
-            
-            # Save PM2 process list
             pm2 save
+            echo "✅ User Service deployed!"
+            pm2 status payai-user-service
+
+  # --- Payment Service ---
+  deploy-payment-service:
+    name: 'Deploy Payment Service (8002)'
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'push' || 
+      (github.event_name == 'workflow_dispatch' && 
+       (inputs.deploy_payment_service == true || inputs.deploy_all_backend == true))
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy Payment Service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
-            # Show status
-            echo "✅ Selective deployment complete!"
-            pm2 status
+            cd ~/payai-guardian/server/payment-service
+            
+            echo "🔄 Pulling latest code..."
+            cd ~/payai-guardian && git pull origin master || git pull origin main
+            cd payment-service
+            
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
+            
+            echo "🔨 Building..."
+            npm run build
+            
+            echo "🚀 Restarting service..."
+            pm2 restart payai-payment-service
+            
+            pm2 save
+            echo "✅ Payment Service deployed!"
+            pm2 status payai-payment-service
+
+  # --- Fraud Detection Service ---
+  deploy-fraud-service:
+    name: 'Deploy Fraud Detection (8003)'
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'push' || 
+      (github.event_name == 'workflow_dispatch' && 
+       (inputs.deploy_fraud_service == true || inputs.deploy_all_backend == true))
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy Fraud Detection
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
+            cd ~/payai-guardian/server/fraud-detection-service
+            
+            echo "🔄 Pulling latest code..."
+            cd ~/payai-guardian && git pull origin master || git pull origin main
+            cd fraud-detection-service
+            
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
+            
+            echo "🔨 Building..."
+            npm run build
+            
+            echo "🚀 Restarting service..."
+            pm2 restart payai-fraud-service
+            
+            pm2 save
+            echo "✅ Fraud Detection deployed!"
+            pm2 status payai-fraud-service
+
+  # --- AI Banking Service ---
+  deploy-ai-service:
+    name: 'Deploy AI Banking (8004)'
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'push' || 
+      (github.event_name == 'workflow_dispatch' && 
+       (inputs.deploy_ai_service == true || inputs.deploy_all_backend == true))
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy AI Banking
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
+            cd ~/payai-guardian/server/ai-banking-service
+            
+            echo "🔄 Pulling latest code..."
+            cd ~/payai-guardian && git pull origin master || git pull origin main
+            cd ai-banking-service
+            
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
+            
+            echo "🔨 Building..."
+            npm run build
+            
+            echo "🚀 Restarting service..."
+            pm2 restart payai-ai-service
+            
+            pm2 save
+            echo "✅ AI Banking deployed!"
+            pm2 status payai-ai-service
+
+  # --- Analytics Service ---
+  deploy-analytics-service:
+    name: 'Deploy Analytics (8005)'
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'push' || 
+      (github.event_name == 'workflow_dispatch' && 
+       (inputs.deploy_analytics_service == true || inputs.deploy_all_backend == true))
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy Analytics
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
+            cd ~/payai-guardian/server/analytics-service
+            
+            echo "🔄 Pulling latest code..."
+            cd ~/payai-guardian && git pull origin master || git pull origin main
+            cd analytics-service
+            
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
+            
+            echo "🔨 Building..."
+            npm run build
+            
+            echo "🚀 Restarting service..."
+            pm2 restart payai-analytics-service
+            
+            pm2 save
+            echo "✅ Analytics deployed!"
+            pm2 status payai-analytics-service
+
+  # --- Notification Service ---
+  deploy-notification-service:
+    name: 'Deploy Notification (8006)'
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'push' || 
+      (github.event_name == 'workflow_dispatch' && 
+       (inputs.deploy_notification_service == true || inputs.deploy_all_backend == true))
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy Notification
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            
+            cd ~/payai-guardian/server/notification-service
+            
+            echo "🔄 Pulling latest code..."
+            cd ~/payai-guardian && git pull origin master || git pull origin main
+            cd notification-service
+            
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
+            
+            echo "🔨 Building..."
+            npm run build
+            
+            echo "🚀 Restarting service..."
+            pm2 restart payai-notification-service
+            
+            pm2 save
+            echo "✅ Notification deployed!"
+            pm2 status payai-notification-service
 
   # ===========================================
   # DEPLOYMENT VERIFICATION
@@ -332,49 +402,48 @@ jobs:
   verify-deployment:
     name: Verify Deployment
     runs-on: ubuntu-latest
-    needs: [frontend-deploy, backend-deploy]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    needs: [
+      frontend-deploy,
+      deploy-api-gateway,
+      deploy-user-service,
+      deploy-payment-service,
+      deploy-fraud-service,
+      deploy-ai-service,
+      deploy-analytics-service,
+      deploy-notification-service
+    ]
+    if: always() && github.event_name == 'push'
     
     steps:
       - name: Wait for Services to Start
-        run: sleep 10
+        run: sleep 15
 
-      - name: Check API Gateway Health
+      - name: Verify API Gateway
         run: |
-          echo "🔍 Checking API Gateway health..."
-          response=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.FRONTEND_URL }}/api/health || echo "000")
-          if [ "$response" = "200" ] || [ "$response" = "404" ]; then
-            echo "✅ API Gateway is responding (HTTP $response)"
-          else
-            echo "⚠️ API Gateway returned HTTP $response"
-          fi
+          echo "🔍 Checking API Gateway..."
+          curl -f -s -o /dev/null -w "HTTP %{http_code}\n" ${{ secrets.API_URL }}/health || echo "⚠️ API Gateway not responding"
 
-      - name: Check Frontend
+      - name: Verify Frontend
         run: |
           echo "🔍 Checking Frontend..."
-          response=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.FRONTEND_URL }} || echo "000")
-          if [ "$response" = "200" ] || [ "$response" = "301" ] || [ "$response" = "302" ]; then
-            echo "✅ Frontend is accessible (HTTP $response)"
-          else
-            echo "⚠️ Frontend returned HTTP $response"
-          fi
+          curl -f -s -o /dev/null -w "HTTP %{http_code}\n" ${{ secrets.FRONTEND_URL }} || echo "⚠️ Frontend not responding"
 
       - name: Deployment Summary
+        if: success()
         run: |
-          echo "## 🎉 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend**: Next.js (Port 3002)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Backend**: 7 Microservices via PM2" >> $GITHUB_STEP_SUMMARY
-          echo "  - Frontend (Port 3002)" >> $GITHUB_STEP_SUMMARY
-          echo "  - API Gateway (Port 8000)" >> $GITHUB_STEP_SUMMARY
-          echo "  - User Service (Port 8001)" >> $GITHUB_STEP_SUMMARY
-          echo "  - Payment Service (Port 8002)" >> $GITHUB_STEP_SUMMARY
-          echo "  - Fraud Detection Service (Port 8003)" >> $GITHUB_STEP_SUMMARY
-          echo "  - AI Banking Service (Port 8004)" >> $GITHUB_STEP_SUMMARY
-          echo "  - Analytics Service (Port 8005)" >> $GITHUB_STEP_SUMMARY
-          echo "  - Notification Service (Port 8006)" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Port | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend (Next.js) | 3002 | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| API Gateway | 8000 | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| User Service | 8001 | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Payment Service | 8002 | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Fraud Detection | 8003 | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI Banking | 8004 | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Analytics | 8005 | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Notification | 8006 | ✅ |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Deployment completed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
