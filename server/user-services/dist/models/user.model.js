@@ -4,7 +4,7 @@ exports.users = void 0;
 const pg_core_1 = require("drizzle-orm/pg-core");
 // ─── Users Table ─────────────────────────────────────────────
 exports.users = (0, pg_core_1.pgTable)('users', {
-    id: (0, pg_core_1.uuid)('id').defaultRandom().primaryKey(),
+    id: (0, pg_core_1.serial)('id').primaryKey(),
     fullName: (0, pg_core_1.varchar)('full_name', { length: 255 }).notNull(),
     email: (0, pg_core_1.varchar)('email', { length: 255 }).unique().notNull(),
     passwordHash: (0, pg_core_1.text)('password_hash').notNull(),

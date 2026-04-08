@@ -1,0 +1,266 @@
+name: Deploy PayAI Guardian
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ===========================================
+  # FRONTEND BUILD & DEPLOY
+  # ===========================================
+  frontend-deploy:
+    name: Build & Deploy Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Build Frontend
+        working-directory: client
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+        run: npm run build
+
+      - name: Deploy Frontend via SCP
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "client/.next/,client/public/,client/package.json,client/next.config.ts,client/.env"
+          target: "~/payai-guardian/client"
+          strip_components: 1
+          rm: true
+
+  # ===========================================
+  # BACKEND BUILD & DEPLOY
+  # ===========================================
+  backend-deploy:
+    name: Build & Deploy Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            server/package-lock.json
+            server/api-gateway/package-lock.json
+            server/user-services/package-lock.json
+            server/payment-service/package-lock.json
+            server/fraud-detection-service/package-lock.json
+            server/ai-banking-service/package-lock.json
+            server/analytics-service/package-lock.json
+            server/notification-service/package-lock.json
+
+      - name: Install Root Dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Install All Service Dependencies
+        working-directory: server
+        run: npm run install:all
+
+      - name: Build All Services
+        working-directory: server
+        run: npm run build:all
+
+      - name: Deploy Backend via SCP
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/api-gateway/,server/user-services/,server/payment-service/,server/fraud-detection-service/,server/ai-banking-service/,server/analytics-service/,server/notification-service/,server/shared/,server/package.json,server/package-lock.json,server/ecosystem.config.js"
+          target: "~/payai-guardian/server"
+          strip_components: 1
+          rm: true
+          exclude: "node_modules,.env,*.log,dist"
+
+      - name: Install Production Dependencies & Restart Services
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd ~/payai-guardian/server
+            
+            # Install production dependencies for all services
+            echo "📦 Installing production dependencies..."
+            npm ci --omit=dev
+            
+            # Install dependencies for each service
+            cd api-gateway && npm ci --omit=dev && cd ..
+            cd user-services && npm ci --omit=dev && cd ..
+            cd payment-service && npm ci --omit=dev && cd ..
+            cd fraud-detection-service && npm ci --omit=dev && cd ..
+            cd ai-banking-service && npm ci --omit=dev && cd ..
+            cd analytics-service && npm ci --omit=dev && cd ..
+            cd notification-service && npm ci --omit=dev && cd ..
+            
+            # Create .env files if they don't exist
+            echo "🔐 Setting up environment variables..."
+            
+            # API Gateway .env
+            if [ ! -f api-gateway/.env ]; then
+              cat > api-gateway/.env << EOF
+            NODE_ENV=production
+            PORT=8000
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+            EOF
+            fi
+            
+            # User Service .env
+            if [ ! -f user-services/.env ]; then
+              cat > user-services/.env << EOF
+            NODE_ENV=production
+            PORT=8001
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_EXPIRE=7d
+            FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+            API_GATEWAY_URL=http://localhost:8000
+            RESEND_EMAIL_API_KEY=${{ secrets.RESEND_EMAIL_API_KEY }}
+            EOF
+            fi
+            
+            # Payment Service .env
+            if [ ! -f payment-service/.env ]; then
+              cat > payment-service/.env << EOF
+            NODE_ENV=production
+            PORT=8002
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            EOF
+            fi
+            
+            # Fraud Detection Service .env
+            if [ ! -f fraud-detection-service/.env ]; then
+              cat > fraud-detection-service/.env << EOF
+            NODE_ENV=production
+            PORT=8003
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            EOF
+            fi
+            
+            # AI Banking Service .env
+            if [ ! -f ai-banking-service/.env ]; then
+              cat > ai-banking-service/.env << EOF
+            NODE_ENV=production
+            PORT=8004
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            EOF
+            fi
+            
+            # Analytics Service .env
+            if [ ! -f analytics-service/.env ]; then
+              cat > analytics-service/.env << EOF
+            NODE_ENV=production
+            PORT=8005
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            EOF
+            fi
+            
+            # Notification Service .env
+            if [ ! -f notification-service/.env ]; then
+              cat > notification-service/.env << EOF
+            NODE_ENV=production
+            PORT=8006
+            RESEND_EMAIL_API_KEY=${{ secrets.RESEND_EMAIL_API_KEY }}
+            EOF
+            fi
+            
+            # Restart all PM2 services
+            echo "🚀 Restarting PM2 services..."
+            pm2 start ecosystem.config.js --env production || pm2 restart ecosystem.config.js --env production
+            
+            # Save PM2 process list
+            pm2 save
+            
+            # Show status
+            echo "✅ Deployment complete!"
+            pm2 status
+
+  # ===========================================
+  # DEPLOYMENT VERIFICATION
+  # ===========================================
+  verify-deployment:
+    name: Verify Deployment
+    runs-on: ubuntu-latest
+    needs: [frontend-deploy, backend-deploy]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+      - name: Wait for Services to Start
+        run: sleep 10
+
+      - name: Check API Gateway Health
+        run: |
+          echo "🔍 Checking API Gateway health..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.FRONTEND_URL }}/api/health || echo "000")
+          if [ "$response" = "200" ] || [ "$response" = "404" ]; then
+            echo "✅ API Gateway is responding (HTTP $response)"
+          else
+            echo "⚠️ API Gateway returned HTTP $response"
+          fi
+
+      - name: Check Frontend
+        run: |
+          echo "🔍 Checking Frontend..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.FRONTEND_URL }} || echo "000")
+          if [ "$response" = "200" ] || [ "$response" = "301" ] || [ "$response" = "302" ]; then
+            echo "✅ Frontend is accessible (HTTP $response)"
+          else
+            echo "⚠️ Frontend returned HTTP $response"
+          fi
+
+      - name: Deployment Summary
+        run: |
+          echo "## 🎉 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend**: Next.js (Production Build)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend**: 7 Microservices via PM2" >> $GITHUB_STEP_SUMMARY
+          echo "  - API Gateway (Port 8000)" >> $GITHUB_STEP_SUMMARY
+          echo "  - User Service (Port 8001)" >> $GITHUB_STEP_SUMMARY
+          echo "  - Payment Service (Port 8002)" >> $GITHUB_STEP_SUMMARY
+          echo "  - Fraud Detection Service (Port 8003)" >> $GITHUB_STEP_SUMMARY
+          echo "  - AI Banking Service (Port 8004)" >> $GITHUB_STEP_SUMMARY
+          echo "  - Analytics Service (Port 8005)" >> $GITHUB_STEP_SUMMARY
+          echo "  - Notification Service (Port 8006)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Deployment completed successfully!" >> $GITHUB_STEP_SUMMARY

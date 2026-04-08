@@ -5,7 +5,7 @@ servers:
   - url: http://localhost:8000
     description: API Gateway
 paths:
-  /api/v1/auth/register:
+  /api/v1/register:
     post:
       tags:
         - Auth
@@ -31,7 +31,7 @@ paths:
         409:
           description: Email already registered
 
-  /api/v1/auth/login:
+  /api/v1/login:
     post:
       tags:
         - Auth
@@ -53,7 +53,7 @@ paths:
         401:
           description: Invalid credentials
 
-  /api/v1/auth/forgot-password:
+  /api/v1/forgot-password:
     post:
       tags:
         - Auth
@@ -70,3 +70,45 @@ paths:
       responses:
         200:
           description: Reset link sent if email exists
+  /api/v1/verify:
+    get:
+      tags:
+        - Auth
+      summary: Verify user email
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Verification token sent to the user's email
+      responses:
+        200:
+          description: Email verified successfully
+        400:
+          description: Invalid or missing token
+        404:
+          description: User not found
+  /api/v1/reset-password:
+    post:
+      tags:
+        - Auth
+      summary: Reset user password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        200:
+          description: Password reset successful
+        400:
+          description: Invalid or expired token
+        404:
+          description: User not found
