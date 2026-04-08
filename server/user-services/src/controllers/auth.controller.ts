@@ -12,7 +12,6 @@ export const register = awaitHandlerFactory(async (req: Request, res: Response) 
   const { fullName, email, password } = req.body;
   if (!fullName || !email || !password) {
     return res.status(400).json({ 
-      status: 'error',
       statusCode: 400,
       success: false, 
       message: 'Missing required fields' 
@@ -22,7 +21,6 @@ export const register = awaitHandlerFactory(async (req: Request, res: Response) 
   const existing = await db.select().from(users).where(eq(users.email, email));
   if (existing?.length) {
     return res.status(409).json({ 
-      status: 'error',
       statusCode: 409,
       success: false, 
       message: 'Email already registered' 
@@ -35,17 +33,16 @@ export const register = awaitHandlerFactory(async (req: Request, res: Response) 
 
   // Send verification email
   const verificationToken = jwt.sign({ userId: created.id }, process.env.JWT_SECRET!, { expiresIn: '24h' });
-  const verificationLink = `${process.env.API_GATEWAY_URL}/api/v1/verify?token=${verificationToken}`;
+  const verificationLink = `${process.env.FRONTEND_URL}/auth/verify-email?token=${verificationToken}`;
   
   await sendEmail({
     from: 'Welcome To PayAI <welcome@raorajan.pro>',
     to: email,
     subject: 'Verify Your PayAI Guardian Account',
-    html: `<h1>Welcome to PayAI Guardian</h1><p>Please verify your email by clicking the link below:</p><a href="${verificationLink}">${verificationLink}</a>`
+    html: `<h1>Welcome to PayAI Guardian</h1><p>Please verify your email by clicking the link below:</p><a href="${verificationLink}">Verify Email Address</a>`
   });
 
   res.status(201).json({ 
-    status: 'success',
     statusCode: 201,
     success: true, 
     message: 'User registered successfully. Please check your email for verification.',
@@ -65,7 +62,6 @@ export const login = awaitHandlerFactory(async (req: Request, res: Response) => 
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ 
-      status: 'error',
       statusCode: 400,
       success: false, 
       message: 'Email and password are required' 
@@ -76,7 +72,6 @@ export const login = awaitHandlerFactory(async (req: Request, res: Response) => 
   const user = rows?.[0];
   if (!user) {
     return res.status(401).json({ 
-      status: 'error',
       statusCode: 401,
       success: false, 
       message: 'Invalid email or password' 
@@ -86,54 +81,55 @@ export const login = awaitHandlerFactory(async (req: Request, res: Response) => 
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) {
     return res.status(401).json({ 
-      status: 'error',
       statusCode: 401,
       success: false, 
       message: 'Invalid email or password' 
     });
   }
 
+  // Check if email is verified - Block login if not verified
+  if (!(user as any).isVerified) {
+    // Generate verification token and link
+    const verificationToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, { expiresIn: '24h' });
+    const verificationLink = `${process.env.FRONTEND_URL}/auth/verify-email?token=${verificationToken}`;
+    
+    // Send verification email
+    await sendEmail({
+      from: 'Security PayAI <security@raorajan.pro>',
+      to: email,
+      subject: 'Verify Your Email - PayAI Guardian',
+      html: `
+        <h1>Email Verification Required - PayAI Guardian</h1>
+        <p>Your email is not verified yet. Please verify your email to login:</p>
+        <a href="${verificationLink}">Verify Email Address</a>
+        <p>This link will expire in 24 hours.</p>
+      `
+    });
+    
+    return res.status(403).json({ 
+      statusCode: 403,
+      success: false, 
+      message: 'Email not verified. Please verify your email to login. A verification email has been sent.',
+      data: { 
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          isVerified: user.isVerified
+        },
+        verificationLink: process.env.NODE_ENV === 'development' ? verificationLink : undefined
+      } 
+    });
+  }
+
+  // Generate token only for verified users
   const token = jwt.sign(
     { userId: user.id, email: user.email }, 
     process.env.JWT_SECRET!, 
     { expiresIn: (process.env.JWT_EXPIRE as any) || '7d' }
   );
 
-  // Check if email is verified
-  if (!(user as any).isVerified) {
-    const verificationToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, { expiresIn: '24h' });
-    const verificationLink = `${process.env.API_GATEWAY_URL}/api/v1/verify?token=${verificationToken}`;
-    
-    await sendEmail({
-      from: 'Security PayAI <security@raorajan.pro>',
-      to: email,
-      subject: 'Verify Your Email - PayAI Guardian',
-      html: `<p>Your email is not verified yet. Please verify it by clicking the link below:</p><a href="${verificationLink}">${verificationLink}</a>`
-    });
-    
-    return res.status(200).json({ 
-      status: 'success',
-      statusCode: 200,
-      success: true, 
-      message: 'Please verify your email to unlock all features. A verification email has been sent.',
-      data: { 
-        token,
-        user: { 
-          id: user.id, 
-          email: user.email, 
-          fullName: user.fullName,
-          isVerified: user.isVerified,
-          isActive: user.isActive,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt
-        },
-        requiresVerification: true
-      } 
-    });
-  }
-
   res.status(200).json({ 
-    status: 'success',
     statusCode: 200,
     success: true, 
     message: 'Login successful',
@@ -147,8 +143,7 @@ export const login = awaitHandlerFactory(async (req: Request, res: Response) => 
         isActive: user.isActive,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
-      },
-      requiresVerification: false
+      }
     } 
   });
 });
@@ -157,7 +152,6 @@ export const forgotPassword = awaitHandlerFactory(async (req: Request, res: Resp
   const { email } = req.body;
   if (!email) {
     return res.status(400).json({ 
-      status: 'error',
       statusCode: 400,
       success: false, 
       message: 'Email is required' 
@@ -168,7 +162,6 @@ export const forgotPassword = awaitHandlerFactory(async (req: Request, res: Resp
   const user = rows?.[0];
   if (!user) {
     return res.status(200).json({ 
-      status: 'success',
       statusCode: 200,
       success: true, 
       message: 'If that email exists, a password reset link has been sent' 
@@ -179,7 +172,7 @@ export const forgotPassword = awaitHandlerFactory(async (req: Request, res: Resp
 
   // Use shared sendEmail utility
   try {
-    const resetLink = `${process.env.API_GATEWAY_URL}/api/v1/reset-password?token=${token}`;
+    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
     
     await sendEmail({
       from: 'Auth PayAI <auth@raorajan.pro>',
@@ -188,12 +181,11 @@ export const forgotPassword = awaitHandlerFactory(async (req: Request, res: Resp
       html: `
         <h1>Password Reset - PayAI Guardian</h1>
         <p>You requested a password reset. Please click the link below to reset your password:</p>
-        <a href="${resetLink}">${resetLink}</a>
+        <a href="${resetLink}">Reset Your Password</a>
         <p>This link will expire in 1 hour.</p>
       `,
     });
     return res.status(200).json({ 
-      status: 'success',
       statusCode: 200,
       success: true, 
       message: 'Password reset email sent successfully' 
@@ -201,9 +193,8 @@ export const forgotPassword = awaitHandlerFactory(async (req: Request, res: Resp
   } catch (sendErr) {
     console.error('email send error', sendErr);
     // dev fallback: return link so the developer can complete the flow
-    const resetLink = `${process.env.API_GATEWAY_URL}/api/v1/reset-password?token=${token}`;
+    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
     return res.status(200).json({ 
-      status: 'success',
       statusCode: 200,
       success: true, 
       message: 'Failed to send email; reset link returned for development.',
@@ -216,7 +207,6 @@ export const resetPassword = awaitHandlerFactory(async (req: Request, res: Respo
   const { token, newPassword } = req.body;
   if (!token || !newPassword) {
     return res.status(400).json({ 
-      status: 'error',
       statusCode: 400,
       success: false, 
       message: 'Token and new password are required' 
@@ -230,7 +220,6 @@ export const resetPassword = awaitHandlerFactory(async (req: Request, res: Respo
 
     if (!userId) {
       return res.status(400).json({ 
-        status: 'error',
         statusCode: 400,
         success: false, 
         message: 'Invalid token' 
@@ -247,7 +236,6 @@ export const resetPassword = awaitHandlerFactory(async (req: Request, res: Respo
 
     if (!result || result.length === 0) {
       return res.status(404).json({ 
-        status: 'error',
         statusCode: 404,
         success: false, 
         message: 'User not found' 
@@ -255,7 +243,6 @@ export const resetPassword = awaitHandlerFactory(async (req: Request, res: Respo
     }
 
     res.status(200).json({ 
-      status: 'success',
       statusCode: 200,
       success: true, 
       message: 'Password reset successful. You can now log in with your new password.' 
@@ -263,14 +250,12 @@ export const resetPassword = awaitHandlerFactory(async (req: Request, res: Respo
   } catch (err: any) {
     if (err.name === 'TokenExpiredError') {
       return res.status(400).json({ 
-        status: 'error',
         statusCode: 400,
         success: false, 
         message: 'Reset token has expired. Please request a new one.' 
       });
     }
     return res.status(400).json({ 
-      status: 'error',
       statusCode: 400,
       success: false, 
       message: 'Invalid reset token' 
@@ -282,7 +267,6 @@ export const verifyEmail = awaitHandlerFactory(async (req: Request, res: Respons
   const { token } = req.query;
   if (!token) {
     return res.status(400).json({ 
-      status: 'error',
       statusCode: 400,
       success: false, 
       message: 'Verification token is required' 
@@ -296,7 +280,6 @@ export const verifyEmail = awaitHandlerFactory(async (req: Request, res: Respons
 
     if (!userId) {
       return res.status(400).json({ 
-        status: 'error',
         statusCode: 400,
         success: false, 
         message: 'Invalid token payload' 
@@ -311,7 +294,6 @@ export const verifyEmail = awaitHandlerFactory(async (req: Request, res: Respons
 
     if (!result || result.length === 0) {
       return res.status(404).json({ 
-        status: 'error',
         statusCode: 404,
         success: false, 
         message: 'User not found' 
@@ -319,7 +301,6 @@ export const verifyEmail = awaitHandlerFactory(async (req: Request, res: Respons
     }
 
     res.status(200).json({ 
-      status: 'success',
       statusCode: 200,
       success: true, 
       message: 'Email verified successfully. You can now log in.',
@@ -335,14 +316,12 @@ export const verifyEmail = awaitHandlerFactory(async (req: Request, res: Respons
   } catch (err: any) {
     if (err.name === 'TokenExpiredError') {
       return res.status(400).json({ 
-        status: 'error',
         statusCode: 400,
         success: false, 
         message: 'Verification token has expired. Please request a new one.' 
       });
     }
     return res.status(400).json({ 
-      status: 'error',
       statusCode: 400,
       success: false, 
       message: 'Invalid verification token' 

@@ -22,7 +22,8 @@ app.use(helmet({
 }));
 
 // 2. OPTIONS Preflight Handler - MUST be first
-app.options('*', (req: Request, res: Response) => {
+app.use((req: Request, res: Response, next) => {
+  if (req.method === 'OPTIONS') {
   const origin = req.headers.origin;
   
   // Development mode: allow any origin
@@ -43,6 +44,9 @@ app.options('*', (req: Request, res: Response) => {
   res.header('Vary', 'Origin');
   
   res.sendStatus(200);
+  } else {
+    next();
+  }
 });
 
 // 3. CORS Middleware Configuration

@@ -35,7 +35,8 @@ export default function LoginForm({ setView }: LoginFormProps) {
     }
 
     try {
-      await dispatch(loginUser({ email, password })).unwrap();
+      const response = await dispatch(loginUser({ email, password })).unwrap();
+      console.log("response",response)
       
       // Success - show toast and redirect
       toast.success('Login successful!');
@@ -44,6 +45,14 @@ export default function LoginForm({ setView }: LoginFormProps) {
       }, 800);
     } catch (err: any) {
       const errorMsg = err?.message || 'Login failed. Please try again.';
+      
+      // If email not verified (403), redirect to verification page
+      if (err?.statusCode === 403) {
+        toast.warning('Email not verified. Please check your inbox or verify your email.');
+       
+        return;
+      }
+      
       toast.error(errorMsg);
     }
   };
