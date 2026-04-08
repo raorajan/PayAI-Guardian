@@ -1,5 +1,21 @@
 module.exports = {
   apps: [
+    // Frontend (Next.js)
+    {
+      name: 'payai-frontend',
+      script: 'npm',
+      args: 'start',
+      cwd: '../client',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: 3002
+      }
+    },
+
     // API Gateway
     {
       name: 'payai-gateway',

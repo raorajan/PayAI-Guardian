@@ -46,10 +46,38 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "client/.next/,client/public/,client/package.json,client/next.config.ts,client/.env"
+          source: "client/.next/,client/public/,client/package.json,client/next.config.ts,client/.env,client/node_modules/.package-lock.json"
           target: "~/payai-guardian/client"
           strip_components: 1
           rm: true
+
+      - name: Install Frontend Dependencies & Restart
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # Load NVM (Node Version Manager)
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+            
+            cd ~/payai-guardian/client
+            
+            echo "📦 Installing frontend production dependencies..."
+            npm ci --omit=dev
+            
+            echo "🚀 Restarting frontend PM2 service..."
+            pm2 restart payai-frontend
+            
+            # Save PM2 process list
+            pm2 save
+            
+            # Show status
+            echo "✅ Frontend deployment complete!"
+            pm2 status payai-frontend
 
   # ===========================================
   # BACKEND BUILD & DEPLOY
@@ -213,9 +241,10 @@ jobs:
             cd analytics-service && npm ci --omit=dev && cd ..
             cd notification-service && npm ci --omit=dev && cd ..
             
-            # Restart all PM2 services
+            # Restart all PM2 services (including frontend)
             echo "🚀 Restarting ALL PM2 services..."
             pm2 restart ecosystem.config.js --env production
+            pm2 restart payai-frontend
             
             # Save PM2 process list
             pm2 save
@@ -337,8 +366,9 @@ jobs:
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend**: Next.js (Production Build)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend**: Next.js (Port 3002)" >> $GITHUB_STEP_SUMMARY
           echo "- **Backend**: 7 Microservices via PM2" >> $GITHUB_STEP_SUMMARY
+          echo "  - Frontend (Port 3002)" >> $GITHUB_STEP_SUMMARY
           echo "  - API Gateway (Port 8000)" >> $GITHUB_STEP_SUMMARY
           echo "  - User Service (Port 8001)" >> $GITHUB_STEP_SUMMARY
           echo "  - Payment Service (Port 8002)" >> $GITHUB_STEP_SUMMARY
