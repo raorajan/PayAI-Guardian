@@ -61,6 +61,69 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for diff
+
+      - name: Detect Changed Services
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        id: changes
+        run: |
+          # Get list of changed files
+          if [ "${{ github.event_name }}" == "push" ]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          fi
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Check each service
+          if echo "$CHANGED_FILES" | grep -q "server/api-gateway/"; then
+            echo "api-gateway=true" >> $GITHUB_OUTPUT
+            echo "✓ API Gateway changed"
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "server/user-services/"; then
+            echo "user-services=true" >> $GITHUB_OUTPUT
+            echo "✓ User Service changed"
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "server/payment-service/"; then
+            echo "payment-service=true" >> $GITHUB_OUTPUT
+            echo "✓ Payment Service changed"
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "server/fraud-detection-service/"; then
+            echo "fraud-detection-service=true" >> $GITHUB_OUTPUT
+            echo "✓ Fraud Detection Service changed"
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "server/ai-banking-service/"; then
+            echo "ai-banking-service=true" >> $GITHUB_OUTPUT
+            echo "✓ AI Banking Service changed"
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "server/analytics-service/"; then
+            echo "analytics-service=true" >> $GITHUB_OUTPUT
+            echo "✓ Analytics Service changed"
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "server/notification-service/"; then
+            echo "notification-service=true" >> $GITHUB_OUTPUT
+            echo "✓ Notification Service changed"
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "server/shared/"; then
+            echo "shared=true" >> $GITHUB_OUTPUT
+            echo "✓ Shared code changed (will redeploy all)"
+          fi
+          
+          # If shared changed or multiple services, deploy all
+          if echo "$CHANGED_FILES" | grep -qE "server/(shared|package)"; then
+            echo "deploy-all=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Deploying all services (shared/package changes)"
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -89,8 +152,8 @@ jobs:
         working-directory: server
         run: npm run build:all
 
-      - name: Deploy Backend via SCP
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      - name: Deploy All Services via SCP
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.changes.outputs.deploy-all == 'true'
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -102,8 +165,29 @@ jobs:
           rm: true
           exclude: "node_modules,.env,*.log,dist"
 
-      - name: Install Production Dependencies & Restart Services
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      - name: Deploy Changed Services via SCP
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.changes.outputs.deploy-all != 'true'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: |
+            ${{ steps.changes.outputs.api-gateway == 'true' && 'server/api-gateway/,' || '' }}
+            ${{ steps.changes.outputs.user-services == 'true' && 'server/user-services/,' || '' }}
+            ${{ steps.changes.outputs.payment-service == 'true' && 'server/payment-service/,' || '' }}
+            ${{ steps.changes.outputs.fraud-detection-service == 'true' && 'server/fraud-detection-service/,' || '' }}
+            ${{ steps.changes.outputs.ai-banking-service == 'true' && 'server/ai-banking-service/,' || '' }}
+            ${{ steps.changes.outputs.analytics-service == 'true' && 'server/analytics-service/,' || '' }}
+            ${{ steps.changes.outputs.notification-service == 'true' && 'server/notification-service/,' || '' }}
+            server/shared/,server/ecosystem.config.js
+          target: "~/payai-guardian/server"
+          strip_components: 1
+          rm: true
+          exclude: "node_modules,.env,*.log,dist"
+
+      - name: Install Production Dependencies & Restart All Services
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.changes.outputs.deploy-all == 'true'
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -117,8 +201,7 @@ jobs:
             
             cd ~/payai-guardian/server
             
-            # Install production dependencies for all services
-            echo "📦 Installing production dependencies..."
+            echo "📦 Installing production dependencies for ALL services..."
             npm ci --omit=dev
             
             # Install dependencies for each service
@@ -130,92 +213,88 @@ jobs:
             cd analytics-service && npm ci --omit=dev && cd ..
             cd notification-service && npm ci --omit=dev && cd ..
             
-            # Create .env files if they don't exist
-            echo "🔐 Setting up environment variables..."
-            
-            # API Gateway .env
-            if [ ! -f api-gateway/.env ]; then
-              cat > api-gateway/.env << EOF
-            NODE_ENV=production
-            PORT=8000
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            FRONTEND_URL=${{ secrets.FRONTEND_URL }}
-            EOF
-            fi
-            
-            # User Service .env
-            if [ ! -f user-services/.env ]; then
-              cat > user-services/.env << EOF
-            NODE_ENV=production
-            PORT=8001
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            JWT_EXPIRE=7d
-            FRONTEND_URL=${{ secrets.FRONTEND_URL }}
-            API_GATEWAY_URL=http://localhost:8000
-            RESEND_EMAIL_API_KEY=${{ secrets.RESEND_EMAIL_API_KEY }}
-            EOF
-            fi
-            
-            # Payment Service .env
-            if [ ! -f payment-service/.env ]; then
-              cat > payment-service/.env << EOF
-            NODE_ENV=production
-            PORT=8002
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            EOF
-            fi
-            
-            # Fraud Detection Service .env
-            if [ ! -f fraud-detection-service/.env ]; then
-              cat > fraud-detection-service/.env << EOF
-            NODE_ENV=production
-            PORT=8003
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            EOF
-            fi
-            
-            # AI Banking Service .env
-            if [ ! -f ai-banking-service/.env ]; then
-              cat > ai-banking-service/.env << EOF
-            NODE_ENV=production
-            PORT=8004
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            EOF
-            fi
-            
-            # Analytics Service .env
-            if [ ! -f analytics-service/.env ]; then
-              cat > analytics-service/.env << EOF
-            NODE_ENV=production
-            PORT=8005
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            EOF
-            fi
-            
-            # Notification Service .env
-            if [ ! -f notification-service/.env ]; then
-              cat > notification-service/.env << EOF
-            NODE_ENV=production
-            PORT=8006
-            RESEND_EMAIL_API_KEY=${{ secrets.RESEND_EMAIL_API_KEY }}
-            EOF
-            fi
-            
             # Restart all PM2 services
-            echo "🚀 Restarting PM2 services..."
-            pm2 start ecosystem.config.js --env production || pm2 restart ecosystem.config.js --env production
+            echo "🚀 Restarting ALL PM2 services..."
+            pm2 restart ecosystem.config.js --env production
             
             # Save PM2 process list
             pm2 save
             
             # Show status
             echo "✅ Deployment complete!"
+            pm2 status
+
+      - name: Install & Restart Changed Services Only
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.changes.outputs.deploy-all != 'true'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # Load NVM
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+            
+            cd ~/payai-guardian/server
+            
+            echo "📦 Selective deployment - only changed services:"
+            
+            # API Gateway
+            if [ "${{ steps.changes.outputs.api-gateway }}" = "true" ]; then
+              echo "🔄 Deploying API Gateway..."
+              cd api-gateway && npm ci --omit=dev && cd ..
+              pm2 restart payai-gateway
+            fi
+            
+            # User Service
+            if [ "${{ steps.changes.outputs.user-services }}" = "true" ]; then
+              echo "🔄 Deploying User Service..."
+              cd user-services && npm ci --omit=dev && cd ..
+              pm2 restart payai-user-service
+            fi
+            
+            # Payment Service
+            if [ "${{ steps.changes.outputs.payment-service }}" = "true" ]; then
+              echo "🔄 Deploying Payment Service..."
+              cd payment-service && npm ci --omit=dev && cd ..
+              pm2 restart payai-payment-service
+            fi
+            
+            # Fraud Detection
+            if [ "${{ steps.changes.outputs.fraud-detection-service }}" = "true" ]; then
+              echo "🔄 Deploying Fraud Detection..."
+              cd fraud-detection-service && npm ci --omit=dev && cd ..
+              pm2 restart payai-fraud-service
+            fi
+            
+            # AI Banking
+            if [ "${{ steps.changes.outputs.ai-banking-service }}" = "true" ]; then
+              echo "🔄 Deploying AI Banking..."
+              cd ai-banking-service && npm ci --omit=dev && cd ..
+              pm2 restart payai-ai-service
+            fi
+            
+            # Analytics
+            if [ "${{ steps.changes.outputs.analytics-service }}" = "true" ]; then
+              echo "🔄 Deploying Analytics..."
+              cd analytics-service && npm ci --omit=dev && cd ..
+              pm2 restart payai-analytics-service
+            fi
+            
+            # Notification
+            if [ "${{ steps.changes.outputs.notification-service }}" = "true" ]; then
+              echo "🔄 Deploying Notification..."
+              cd notification-service && npm ci --omit=dev && cd ..
+              pm2 restart payai-notification-service
+            fi
+            
+            # Save PM2 process list
+            pm2 save
+            
+            # Show status
+            echo "✅ Selective deployment complete!"
             pm2 status
 
   # ===========================================
