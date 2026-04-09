@@ -87,7 +87,7 @@ jobs:
           overwrite: true
           exclude: "node_modules,.next,.git"
 
-      - name: Restart Service
+      - name: Restart Frontend Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -109,14 +109,14 @@ jobs:
             pm2 restart payai-frontend || pm2 start npm --name "payai-frontend" -- start
             pm2 save
             
-            echo "✅ Frontend deployed!"
+            echo "✅ Frontend deployed on port 3002!"
             pm2 status payai-frontend
 
   # ===========================================
   # BACKEND SERVICES DEPLOYMENT
   # ===========================================
 
-  # --- API Gateway ---
+  # --- API Gateway (Port 8000) ---
   deploy-api-gateway:
     name: API Gateway (8000)
     runs-on: ubuntu-latest
@@ -128,7 +128,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Sync Shared to Server
+      - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -139,7 +139,7 @@ jobs:
           overwrite: true
           exclude: "node_modules"
       
-      - name: Sync API Gateway to Server
+      - name: Sync API Gateway
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -150,7 +150,7 @@ jobs:
           overwrite: true
           exclude: "node_modules,dist,.git"
       
-      - name: Restart Service
+      - name: Setup and Start API Gateway
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -168,14 +168,14 @@ jobs:
             echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
+            echo "🚀 Starting API Gateway on port 8000..."
             pm2 restart payai-gateway || pm2 start dist/server.js --name "payai-gateway"
             pm2 save
             
             echo "✅ API Gateway deployed!"
             pm2 status payai-gateway
 
-  # --- User Service ---
+  # --- User Service (Port 8001) ---
   deploy-user-service:
     name: User Service (8001)
     runs-on: ubuntu-latest
@@ -187,7 +187,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Sync Shared to Server
+      - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -198,7 +198,7 @@ jobs:
           overwrite: true
           exclude: "node_modules"
       
-      - name: Sync User Service to Server
+      - name: Sync User Service
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -209,7 +209,7 @@ jobs:
           overwrite: true
           exclude: "node_modules,dist,.git"
       
-      - name: Restart Service
+      - name: Setup and Start User Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -227,14 +227,14 @@ jobs:
             echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
+            echo "🚀 Starting User Service on port 8001..."
             pm2 restart payai-user-service || pm2 start dist/server.js --name "payai-user-service"
             pm2 save
             
             echo "✅ User Service deployed!"
             pm2 status payai-user-service
 
-  # --- Payment Service ---
+  # --- Payment Service (Port 8002) ---
   deploy-payment-service:
     name: Payment Service (8002)
     runs-on: ubuntu-latest
@@ -246,7 +246,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Sync Shared to Server
+      - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -257,7 +257,7 @@ jobs:
           overwrite: true
           exclude: "node_modules"
       
-      - name: Sync Payment Service to Server
+      - name: Sync Payment Service
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -268,7 +268,7 @@ jobs:
           overwrite: true
           exclude: "node_modules,dist,.git"
       
-      - name: Restart Service
+      - name: Setup and Start Payment Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -286,14 +286,14 @@ jobs:
             echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
+            echo "🚀 Starting Payment Service on port 8002..."
             pm2 restart payai-payment-service || pm2 start dist/server.js --name "payai-payment-service"
             pm2 save
             
             echo "✅ Payment Service deployed!"
             pm2 status payai-payment-service
 
-  # --- Fraud Detection Service ---
+  # --- Fraud Detection Service (Port 8003) ---
   deploy-fraud-service:
     name: Fraud Detection (8003)
     runs-on: ubuntu-latest
@@ -305,7 +305,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Sync Shared to Server
+      - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -316,7 +316,7 @@ jobs:
           overwrite: true
           exclude: "node_modules"
       
-      - name: Sync Fraud Detection to Server
+      - name: Sync Fraud Detection Service
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -327,7 +327,7 @@ jobs:
           overwrite: true
           exclude: "node_modules,dist,.git"
       
-      - name: Restart Service
+      - name: Setup and Start Fraud Detection
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -345,14 +345,14 @@ jobs:
             echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
+            echo "🚀 Starting Fraud Detection on port 8003..."
             pm2 restart payai-fraud-service || pm2 start dist/server.js --name "payai-fraud-service"
             pm2 save
             
             echo "✅ Fraud Detection deployed!"
             pm2 status payai-fraud-service
 
-  # --- AI Banking Service ---
+  # --- AI Banking Service (Port 8004) ---
   deploy-ai-service:
     name: AI Banking (8004)
     runs-on: ubuntu-latest
@@ -364,7 +364,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Sync Shared to Server
+      - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -375,7 +375,7 @@ jobs:
           overwrite: true
           exclude: "node_modules"
       
-      - name: Sync AI Banking to Server
+      - name: Sync AI Banking Service
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -386,7 +386,7 @@ jobs:
           overwrite: true
           exclude: "node_modules,dist,.git"
       
-      - name: Restart Service
+      - name: Setup and Start AI Banking
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -404,14 +404,14 @@ jobs:
             echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
+            echo "🚀 Starting AI Banking on port 8004..."
             pm2 restart payai-ai-service || pm2 start dist/server.js --name "payai-ai-service"
             pm2 save
             
             echo "✅ AI Banking deployed!"
             pm2 status payai-ai-service
 
-  # --- Analytics Service ---
+  # --- Analytics Service (Port 8005) ---
   deploy-analytics-service:
     name: Analytics (8005)
     runs-on: ubuntu-latest
@@ -423,7 +423,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Sync Shared to Server
+      - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -434,7 +434,7 @@ jobs:
           overwrite: true
           exclude: "node_modules"
       
-      - name: Sync Analytics to Server
+      - name: Sync Analytics Service
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -445,7 +445,7 @@ jobs:
           overwrite: true
           exclude: "node_modules,dist,.git"
       
-      - name: Restart Service
+      - name: Setup and Start Analytics
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -463,14 +463,14 @@ jobs:
             echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
+            echo "🚀 Starting Analytics on port 8005..."
             pm2 restart payai-analytics-service || pm2 start dist/server.js --name "payai-analytics-service"
             pm2 save
             
             echo "✅ Analytics deployed!"
             pm2 status payai-analytics-service
 
-  # --- Notification Service ---
+  # --- Notification Service (Port 8006) ---
   deploy-notification-service:
     name: Notification (8006)
     runs-on: ubuntu-latest
@@ -482,7 +482,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Sync Shared to Server
+      - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -493,7 +493,7 @@ jobs:
           overwrite: true
           exclude: "node_modules"
       
-      - name: Sync Notification to Server
+      - name: Sync Notification Service
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -504,7 +504,7 @@ jobs:
           overwrite: true
           exclude: "node_modules,dist,.git"
       
-      - name: Restart Service
+      - name: Setup and Start Notification
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -522,7 +522,7 @@ jobs:
             echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
+            echo "🚀 Starting Notification on port 8006..."
             pm2 restart payai-notification-service || pm2 start dist/server.js --name "payai-notification-service"
             pm2 save
             
@@ -553,18 +553,18 @@ jobs:
 
       - name: Verify API Gateway
         run: |
-          echo "🔍 Checking API Gateway..."
-          curl -f -s -o /dev/null -w "HTTP %{http_code}\n" ${{ secrets.API_URL }}/health || echo "⚠️ API Gateway not responding"
+          echo "🔍 Checking API Gateway on port 8000..."
+          curl -f -s -o /dev/null -w "HTTP %{http_code}\n" http://${{ secrets.SERVER_HOST }}:8000/health || echo "⚠️ API Gateway not responding"
 
       - name: Verify Frontend
         run: |
-          echo "🔍 Checking Frontend..."
-          curl -f -s -o /dev/null -w "HTTP %{http_code}\n" ${{ secrets.FRONTEND_URL }} || echo "⚠️ Frontend not responding"
+          echo "🔍 Checking Frontend on port 3002..."
+          curl -f -s -o /dev/null -w "HTTP %{http_code}\n" http://${{ secrets.SERVER_HOST }}:3002 || echo "⚠️ Frontend not responding"
 
       - name: Deployment Summary
         if: success()
         run: |
-          echo "## 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎉 PayAI Guardian Deployment Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Service | Port | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|------|--------|" >> $GITHUB_STEP_SUMMARY
