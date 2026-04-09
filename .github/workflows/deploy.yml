@@ -47,15 +47,17 @@ env:
 
 jobs:
   # ===========================================
-  # FRONTEND BUILD & DEPLOY
+  # FRONTEND DEPLOYMENT
   # ===========================================
   frontend-deploy:
-    name: Build & Deploy Frontend
+    name: Frontend (3002)
     runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'push' || 
+      (github.event_name == 'workflow_dispatch' && inputs.deploy_frontend == true)
     
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -74,10 +76,17 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: npm run build
 
-      - name: Deploy Frontend via SSH
-        if: >
-          github.event_name == 'push' || 
-          (github.event_name == 'workflow_dispatch' && inputs.deploy_frontend == true)
+      - name: Sync to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "client/"
+          target: "~/payai-guardian/"
+          strip_components: 1
+
+      - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -86,23 +95,16 @@ jobs:
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-                  
+            
             cd ~/payai-guardian/client
-                  
-            # Pull latest code
-            git pull origin master || git pull origin main
-                  
-            echo "📦 Installing frontend production dependencies..."
+            
             npm ci --omit=dev
-                  
-            echo "🔨 Building frontend..."
             npm run build
-                  
-            echo "🚀 Restarting frontend PM2 service..."
+            
             pm2 restart payai-frontend || pm2 start npm --name "payai-frontend" -- start
-                  
             pm2 save
-            echo "✅ Frontend deployment complete!"
+            
+            echo "✅ Frontend deployed!"
             pm2 status payai-frontend
 
   # ===========================================
@@ -111,7 +113,7 @@ jobs:
 
   # --- API Gateway ---
   deploy-api-gateway:
-    name: 'Deploy API Gateway (8000)'
+    name: API Gateway (8000)
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'push' || 
@@ -121,7 +123,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Deploy API Gateway
+      - name: Sync to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/api-gateway/"
+          target: "~/payai-guardian/server/"
+          strip_components: 2
+      
+      - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -133,26 +145,18 @@ jobs:
             
             cd ~/payai-guardian/server/api-gateway
             
-            echo "🔄 Pulling latest code..."
-            cd ~/payai-guardian && git pull origin master || git pull origin main
-            cd api-gateway
-            
-            echo "📦 Installing dependencies..."
             npm ci --omit=dev
-            
-            echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
-            pm2 restart payai-gateway
-            
+            pm2 restart payai-gateway || pm2 start dist/server.js --name "payai-gateway"
             pm2 save
+            
             echo "✅ API Gateway deployed!"
             pm2 status payai-gateway
 
   # --- User Service ---
   deploy-user-service:
-    name: 'Deploy User Service (8001)'
+    name: User Service (8001)
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'push' || 
@@ -162,7 +166,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Deploy User Service
+      - name: Sync to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/user-services/"
+          target: "~/payai-guardian/server/"
+          strip_components: 2
+      
+      - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -174,26 +188,18 @@ jobs:
             
             cd ~/payai-guardian/server/user-services
             
-            echo "🔄 Pulling latest code..."
-            cd ~/payai-guardian && git pull origin master || git pull origin main
-            cd user-services
-            
-            echo "📦 Installing dependencies..."
             npm ci --omit=dev
-            
-            echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
-            pm2 restart payai-user-service
-            
+            pm2 restart payai-user-service || pm2 start dist/server.js --name "payai-user-service"
             pm2 save
+            
             echo "✅ User Service deployed!"
             pm2 status payai-user-service
 
   # --- Payment Service ---
   deploy-payment-service:
-    name: 'Deploy Payment Service (8002)'
+    name: Payment Service (8002)
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'push' || 
@@ -203,7 +209,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Deploy Payment Service
+      - name: Sync to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/payment-service/"
+          target: "~/payai-guardian/server/"
+          strip_components: 2
+      
+      - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -215,26 +231,18 @@ jobs:
             
             cd ~/payai-guardian/server/payment-service
             
-            echo "🔄 Pulling latest code..."
-            cd ~/payai-guardian && git pull origin master || git pull origin main
-            cd payment-service
-            
-            echo "📦 Installing dependencies..."
             npm ci --omit=dev
-            
-            echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
-            pm2 restart payai-payment-service
-            
+            pm2 restart payai-payment-service || pm2 start dist/server.js --name "payai-payment-service"
             pm2 save
+            
             echo "✅ Payment Service deployed!"
             pm2 status payai-payment-service
 
   # --- Fraud Detection Service ---
   deploy-fraud-service:
-    name: 'Deploy Fraud Detection (8003)'
+    name: Fraud Detection (8003)
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'push' || 
@@ -244,7 +252,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Deploy Fraud Detection
+      - name: Sync to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/fraud-detection-service/"
+          target: "~/payai-guardian/server/"
+          strip_components: 2
+      
+      - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -256,26 +274,18 @@ jobs:
             
             cd ~/payai-guardian/server/fraud-detection-service
             
-            echo "🔄 Pulling latest code..."
-            cd ~/payai-guardian && git pull origin master || git pull origin main
-            cd fraud-detection-service
-            
-            echo "📦 Installing dependencies..."
             npm ci --omit=dev
-            
-            echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
-            pm2 restart payai-fraud-service
-            
+            pm2 restart payai-fraud-service || pm2 start dist/server.js --name "payai-fraud-service"
             pm2 save
+            
             echo "✅ Fraud Detection deployed!"
             pm2 status payai-fraud-service
 
   # --- AI Banking Service ---
   deploy-ai-service:
-    name: 'Deploy AI Banking (8004)'
+    name: AI Banking (8004)
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'push' || 
@@ -285,7 +295,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Deploy AI Banking
+      - name: Sync to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/ai-banking-service/"
+          target: "~/payai-guardian/server/"
+          strip_components: 2
+      
+      - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -297,26 +317,18 @@ jobs:
             
             cd ~/payai-guardian/server/ai-banking-service
             
-            echo "🔄 Pulling latest code..."
-            cd ~/payai-guardian && git pull origin master || git pull origin main
-            cd ai-banking-service
-            
-            echo "📦 Installing dependencies..."
             npm ci --omit=dev
-            
-            echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
-            pm2 restart payai-ai-service
-            
+            pm2 restart payai-ai-service || pm2 start dist/server.js --name "payai-ai-service"
             pm2 save
+            
             echo "✅ AI Banking deployed!"
             pm2 status payai-ai-service
 
   # --- Analytics Service ---
   deploy-analytics-service:
-    name: 'Deploy Analytics (8005)'
+    name: Analytics (8005)
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'push' || 
@@ -326,7 +338,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Deploy Analytics
+      - name: Sync to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/analytics-service/"
+          target: "~/payai-guardian/server/"
+          strip_components: 2
+      
+      - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -338,26 +360,18 @@ jobs:
             
             cd ~/payai-guardian/server/analytics-service
             
-            echo "🔄 Pulling latest code..."
-            cd ~/payai-guardian && git pull origin master || git pull origin main
-            cd analytics-service
-            
-            echo "📦 Installing dependencies..."
             npm ci --omit=dev
-            
-            echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
-            pm2 restart payai-analytics-service
-            
+            pm2 restart payai-analytics-service || pm2 start dist/server.js --name "payai-analytics-service"
             pm2 save
+            
             echo "✅ Analytics deployed!"
             pm2 status payai-analytics-service
 
   # --- Notification Service ---
   deploy-notification-service:
-    name: 'Deploy Notification (8006)'
+    name: Notification (8006)
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'push' || 
@@ -367,7 +381,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Deploy Notification
+      - name: Sync to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/notification-service/"
+          target: "~/payai-guardian/server/"
+          strip_components: 2
+      
+      - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -379,20 +403,12 @@ jobs:
             
             cd ~/payai-guardian/server/notification-service
             
-            echo "🔄 Pulling latest code..."
-            cd ~/payai-guardian && git pull origin master || git pull origin main
-            cd notification-service
-            
-            echo "📦 Installing dependencies..."
             npm ci --omit=dev
-            
-            echo "🔨 Building..."
             npm run build
             
-            echo "🚀 Restarting service..."
-            pm2 restart payai-notification-service
-            
+            pm2 restart payai-notification-service || pm2 start dist/server.js --name "payai-notification-service"
             pm2 save
+            
             echo "✅ Notification deployed!"
             pm2 status payai-notification-service
 
