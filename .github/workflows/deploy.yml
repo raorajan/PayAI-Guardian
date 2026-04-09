@@ -76,17 +76,7 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: npm run build
 
-      - name: Create directory structure
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            mkdir -p ~/payai-guardian
-            mkdir -p ~/payai-guardian/server
-
-      - name: Sync Frontend to Server
+      - name: Sync to Server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -137,14 +127,6 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Create server directory
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: mkdir -p ~/payai-guardian/server
       
       - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
@@ -205,14 +187,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Create server directory
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: mkdir -p ~/payai-guardian/server
-      
       - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -271,14 +245,6 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Create server directory
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: mkdir -p ~/payai-guardian/server
       
       - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
@@ -339,14 +305,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Create server directory
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: mkdir -p ~/payai-guardian/server
-      
       - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -405,14 +363,6 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Create server directory
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: mkdir -p ~/payai-guardian/server
       
       - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
@@ -473,14 +423,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Create server directory
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: mkdir -p ~/payai-guardian/server
-      
       - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -539,14 +481,6 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Create server directory
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: mkdir -p ~/payai-guardian/server
       
       - name: Sync Shared Library
         uses: appleboy/scp-action@v0.1.7
