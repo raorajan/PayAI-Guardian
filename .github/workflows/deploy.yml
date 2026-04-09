@@ -76,17 +76,6 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: npm run build
 
-      - name: Sync Shared to Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "server/shared"
-          target: "~/payai-guardian/server"
-          overwrite: true
-          exclude: "node_modules"
-
       - name: Sync to Server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -96,7 +85,7 @@ jobs:
           source: "client"
           target: "~/payai-guardian"
           overwrite: true
-          exclude: "node_modules,.next,dist,.git"
+          exclude: "node_modules,.next,.git"
 
       - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
@@ -149,8 +138,8 @@ jobs:
           target: "~/payai-guardian/server"
           overwrite: true
           exclude: "node_modules"
-
-      - name: Sync to Server
+      
+      - name: Sync API Gateway to Server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -159,7 +148,7 @@ jobs:
           source: "server/api-gateway"
           target: "~/payai-guardian/server"
           overwrite: true
-          exclude: "node_modules,.next,dist,.git"
+          exclude: "node_modules,dist,.git"
       
       - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
@@ -208,8 +197,8 @@ jobs:
           target: "~/payai-guardian/server"
           overwrite: true
           exclude: "node_modules"
-
-      - name: Sync to Server
+      
+      - name: Sync User Service to Server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -218,7 +207,7 @@ jobs:
           source: "server/user-services"
           target: "~/payai-guardian/server"
           overwrite: true
-          exclude: "node_modules,.next,dist,.git"
+          exclude: "node_modules,dist,.git"
       
       - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
@@ -267,8 +256,8 @@ jobs:
           target: "~/payai-guardian/server"
           overwrite: true
           exclude: "node_modules"
-
-      - name: Sync to Server
+      
+      - name: Sync Payment Service to Server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -277,7 +266,7 @@ jobs:
           source: "server/payment-service"
           target: "~/payai-guardian/server"
           overwrite: true
-          exclude: "node_modules,.next,dist,.git"
+          exclude: "node_modules,dist,.git"
       
       - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
@@ -326,8 +315,8 @@ jobs:
           target: "~/payai-guardian/server"
           overwrite: true
           exclude: "node_modules"
-
-      - name: Sync to Server
+      
+      - name: Sync Fraud Detection to Server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -336,7 +325,7 @@ jobs:
           source: "server/fraud-detection-service"
           target: "~/payai-guardian/server"
           overwrite: true
-          exclude: "node_modules,.next,dist,.git"
+          exclude: "node_modules,dist,.git"
       
       - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
@@ -385,8 +374,8 @@ jobs:
           target: "~/payai-guardian/server"
           overwrite: true
           exclude: "node_modules"
-
-      - name: Sync to Server
+      
+      - name: Sync AI Banking to Server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -395,7 +384,7 @@ jobs:
           source: "server/ai-banking-service"
           target: "~/payai-guardian/server"
           overwrite: true
-          exclude: "node_modules,.next,dist,.git"
+          exclude: "node_modules,dist,.git"
       
       - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
@@ -444,8 +433,8 @@ jobs:
           target: "~/payai-guardian/server"
           overwrite: true
           exclude: "node_modules"
-
-      - name: Sync to Server
+      
+      - name: Sync Analytics to Server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -454,7 +443,7 @@ jobs:
           source: "server/analytics-service"
           target: "~/payai-guardian/server"
           overwrite: true
-          exclude: "node_modules,.next,dist,.git"
+          exclude: "node_modules,dist,.git"
       
       - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
@@ -503,8 +492,8 @@ jobs:
           target: "~/payai-guardian/server"
           overwrite: true
           exclude: "node_modules"
-
-      - name: Sync to Server
+      
+      - name: Sync Notification to Server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -513,7 +502,7 @@ jobs:
           source: "server/notification-service"
           target: "~/payai-guardian/server"
           overwrite: true
-          exclude: "node_modules,.next,dist,.git"
+          exclude: "node_modules,dist,.git"
       
       - name: Restart Service
         uses: appleboy/ssh-action@v1.0.3
