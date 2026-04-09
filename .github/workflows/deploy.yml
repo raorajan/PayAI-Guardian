@@ -61,7 +61,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: "server/shared"
-          target: "~/payai-guardian/server"
+          target: "~/payai-guardian"
           overwrite: true
           exclude: "node_modules,.git"
       
@@ -159,7 +159,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: "server/api-gateway"
-          target: "~/payai-guardian/server"
+          target: "~/payai-guardian"
           overwrite: true
           exclude: "node_modules,dist,.git"
       
@@ -210,7 +210,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: "server/user-services"
-          target: "~/payai-guardian/server"
+          target: "~/payai-guardian"
           overwrite: true
           exclude: "node_modules,dist,.git"
       
@@ -268,7 +268,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: "server/payment-service"
-          target: "~/payai-guardian/server"
+          target: "~/payai-guardian"
           overwrite: true
           exclude: "node_modules,dist,.git"
       
@@ -319,7 +319,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: "server/fraud-detection-service"
-          target: "~/payai-guardian/server"
+          target: "~/payai-guardian"
           overwrite: true
           exclude: "node_modules,dist,.git"
       
@@ -370,7 +370,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: "server/ai-banking-service"
-          target: "~/payai-guardian/server"
+          target: "~/payai-guardian"
           overwrite: true
           exclude: "node_modules,dist,.git"
       
@@ -421,7 +421,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: "server/analytics-service"
-          target: "~/payai-guardian/server"
+          target: "~/payai-guardian"
           overwrite: true
           exclude: "node_modules,dist,.git"
       
@@ -472,7 +472,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           source: "server/notification-service"
-          target: "~/payai-guardian/server"
+          target: "~/payai-guardian"
           overwrite: true
           exclude: "node_modules,dist,.git"
       
