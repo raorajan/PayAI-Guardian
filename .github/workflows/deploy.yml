@@ -46,42 +46,12 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  sync-shared:
-    name: Sync Shared Library
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Sync Shared Library to Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
-          source: "server/shared"
-          target: "~/payai-guardian/server"
-          overwrite: true
-          exclude: "node_modules,.git"
-      
-      - name: Install Shared Dependencies
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
-          script: |
-            cd ~/payai-guardian/server/shared
-            if [ -f "package.json" ]; then
-              npm ci --omit=dev --production 2>/dev/null || npm install --production
-            fi
-
+  # ===========================================
+  # FRONTEND DEPLOYMENT
+  # ===========================================
   frontend-deploy:
-    name: Frontend (Port 3002)
+    name: Frontend (3002)
     runs-on: ubuntu-latest
-    needs: sync-shared
     if: >
       github.event_name == 'push' || 
       (github.event_name == 'workflow_dispatch' && inputs.deploy_frontend == true)
@@ -106,13 +76,12 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: npm run build
 
-      - name: Sync Frontend to Server
+      - name: Sync to Server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           source: "client"
           target: "~/payai-guardian"
           overwrite: true
@@ -124,25 +93,33 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             cd ~/payai-guardian/client
             
-            npm ci --omit=dev --production
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
+            
+            echo "🔨 Building..."
             npm run build
             
-            pm2 delete payai-frontend 2>/dev/null || true
-            PORT=3002 pm2 start npm --name "payai-frontend" -- start
+            echo "🚀 Restarting service..."
+            pm2 restart payai-frontend || pm2 start npm --name "payai-frontend" -- start
             pm2 save
+            
+            echo "✅ Frontend deployed on port 3002!"
             pm2 status payai-frontend
 
+  # ===========================================
+  # BACKEND SERVICES DEPLOYMENT
+  # ===========================================
+
+  # --- API Gateway (Port 8000) ---
   deploy-api-gateway:
     name: API Gateway (8000)
     runs-on: ubuntu-latest
-    needs: sync-shared
     if: >
       github.event_name == 'push' || 
       (github.event_name == 'workflow_dispatch' && 
@@ -151,13 +128,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Clean up old structure
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd ~/payai-guardian
+            rm -rf server/server
+            mkdir -p server
+
+      - name: Sync Shared Library
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/shared"
+          target: "~/payai-guardian/server"
+          overwrite: true
+          exclude: "node_modules"
+      
       - name: Sync API Gateway
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           source: "server/api-gateway"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -169,31 +167,31 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             cd ~/payai-guardian/server/api-gateway
             
-            npm ci --omit=dev --production
-            npm run build 2>/dev/null || echo "Building..."
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
             
-            pm2 delete payai-gateway 2>/dev/null || true
+            echo "🔨 Building..."
+            npm run build
             
-            PORT=8000 \
-            NODE_ENV=production \
-            API_GATEWAY_URL=http://localhost:8000 \
-            JWT_SECRET='${{ secrets.JWT_SECRET }}' \
-            pm2 start dist/server.js --name "payai-gateway"
-            
+            echo "🚀 Starting API Gateway on port 8000..."
+            pm2 restart payai-gateway || pm2 start dist/server.js --name "payai-gateway"
             pm2 save
+            
+            echo "✅ API Gateway deployed!"
             pm2 status payai-gateway
 
+  # --- User Service (Port 8001) ---
+      - name: Clean old folders
+        run: echo "Cleanup done in API Gateway"
   deploy-user-service:
     name: User Service (8001)
     runs-on: ubuntu-latest
-    needs: sync-shared
     if: >
       github.event_name == 'push' || 
       (github.event_name == 'workflow_dispatch' && 
@@ -202,13 +200,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Sync Shared Library
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/shared"
+          target: "~/payai-guardian/server"
+          overwrite: true
+          exclude: "node_modules"
+      
       - name: Sync User Service
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           source: "server/user-services"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -220,38 +228,29 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             cd ~/payai-guardian/server/user-services
             
-            npm ci --omit=dev --production
-            npm run build 2>/dev/null || echo "Building..."
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
             
-            pm2 delete payai-user-service 2>/dev/null || true
+            echo "🔨 Building..."
+            npm run build
             
-            PORT=8001 \
-            NODE_ENV=production \
-            AUTH_SERVICE_URL=http://localhost:8001 \
-            API_GATEWAY_URL=http://localhost:8000 \
-            FRONTEND_URL=http://localhost:3000 \
-            DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-            JWT_SECRET='${{ secrets.JWT_SECRET }}' \
-            JWT_EXPIRE=7d \
-            RESEND_EMAIL_API_KEY='${{ secrets.RESEND_EMAIL_API_KEY }}' \
-            ROLE='USER' \
-            ADMIN='ADMIN' \
-            pm2 start dist/server.js --name "payai-user-service"
-            
+            echo "🚀 Starting User Service on port 8001..."
+            pm2 restart payai-user-service || pm2 start dist/server.js --name "payai-user-service"
             pm2 save
+            
+            echo "✅ User Service deployed!"
             pm2 status payai-user-service
 
+  # --- Payment Service (Port 8002) ---
   deploy-payment-service:
     name: Payment Service (8002)
     runs-on: ubuntu-latest
-    needs: sync-shared
     if: >
       github.event_name == 'push' || 
       (github.event_name == 'workflow_dispatch' && 
@@ -260,13 +259,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Sync Shared Library
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/shared"
+          target: "~/payai-guardian/server"
+          overwrite: true
+          exclude: "node_modules"
+      
       - name: Sync Payment Service
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           source: "server/payment-service"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -278,31 +287,29 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             cd ~/payai-guardian/server/payment-service
             
-            npm ci --omit=dev --production
-            npm run build 2>/dev/null || echo "Building..."
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
             
-            pm2 delete payai-payment-service 2>/dev/null || true
+            echo "🔨 Building..."
+            npm run build
             
-            PORT=8002 \
-            NODE_ENV=production \
-            API_GATEWAY_URL=http://localhost:8000 \
-            DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-            pm2 start dist/server.js --name "payai-payment-service"
-            
+            echo "🚀 Starting Payment Service on port 8002..."
+            pm2 restart payai-payment-service || pm2 start dist/server.js --name "payai-payment-service"
             pm2 save
+            
+            echo "✅ Payment Service deployed!"
             pm2 status payai-payment-service
 
+  # --- Fraud Detection Service (Port 8003) ---
   deploy-fraud-service:
     name: Fraud Detection (8003)
     runs-on: ubuntu-latest
-    needs: sync-shared
     if: >
       github.event_name == 'push' || 
       (github.event_name == 'workflow_dispatch' && 
@@ -311,13 +318,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Sync Shared Library
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/shared"
+          target: "~/payai-guardian/server"
+          overwrite: true
+          exclude: "node_modules"
+      
       - name: Sync Fraud Detection Service
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           source: "server/fraud-detection-service"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -329,31 +346,29 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             cd ~/payai-guardian/server/fraud-detection-service
             
-            npm ci --omit=dev --production
-            npm run build 2>/dev/null || echo "Building..."
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
             
-            pm2 delete payai-fraud-service 2>/dev/null || true
+            echo "🔨 Building..."
+            npm run build
             
-            PORT=8003 \
-            NODE_ENV=production \
-            API_GATEWAY_URL=http://localhost:8000 \
-            DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-            pm2 start dist/server.js --name "payai-fraud-service"
-            
+            echo "🚀 Starting Fraud Detection on port 8003..."
+            pm2 restart payai-fraud-service || pm2 start dist/server.js --name "payai-fraud-service"
             pm2 save
+            
+            echo "✅ Fraud Detection deployed!"
             pm2 status payai-fraud-service
 
+  # --- AI Banking Service (Port 8004) ---
   deploy-ai-service:
     name: AI Banking (8004)
     runs-on: ubuntu-latest
-    needs: sync-shared
     if: >
       github.event_name == 'push' || 
       (github.event_name == 'workflow_dispatch' && 
@@ -362,13 +377,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Sync Shared Library
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/shared"
+          target: "~/payai-guardian/server"
+          overwrite: true
+          exclude: "node_modules"
+      
       - name: Sync AI Banking Service
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           source: "server/ai-banking-service"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -380,31 +405,29 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             cd ~/payai-guardian/server/ai-banking-service
             
-            npm ci --omit=dev --production
-            npm run build 2>/dev/null || echo "Building..."
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
             
-            pm2 delete payai-ai-service 2>/dev/null || true
+            echo "🔨 Building..."
+            npm run build
             
-            PORT=8004 \
-            NODE_ENV=production \
-            API_GATEWAY_URL=http://localhost:8000 \
-            DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-            pm2 start dist/server.js --name "payai-ai-service"
-            
+            echo "🚀 Starting AI Banking on port 8004..."
+            pm2 restart payai-ai-service || pm2 start dist/server.js --name "payai-ai-service"
             pm2 save
+            
+            echo "✅ AI Banking deployed!"
             pm2 status payai-ai-service
 
+  # --- Analytics Service (Port 8005) ---
   deploy-analytics-service:
     name: Analytics (8005)
     runs-on: ubuntu-latest
-    needs: sync-shared
     if: >
       github.event_name == 'push' || 
       (github.event_name == 'workflow_dispatch' && 
@@ -413,13 +436,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Sync Shared Library
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/shared"
+          target: "~/payai-guardian/server"
+          overwrite: true
+          exclude: "node_modules"
+      
       - name: Sync Analytics Service
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           source: "server/analytics-service"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -431,31 +464,29 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             cd ~/payai-guardian/server/analytics-service
             
-            npm ci --omit=dev --production
-            npm run build 2>/dev/null || echo "Building..."
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
             
-            pm2 delete payai-analytics-service 2>/dev/null || true
+            echo "🔨 Building..."
+            npm run build
             
-            PORT=8005 \
-            NODE_ENV=production \
-            API_GATEWAY_URL=http://localhost:8000 \
-            DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-            pm2 start dist/server.js --name "payai-analytics-service"
-            
+            echo "🚀 Starting Analytics on port 8005..."
+            pm2 restart payai-analytics-service || pm2 start dist/server.js --name "payai-analytics-service"
             pm2 save
+            
+            echo "✅ Analytics deployed!"
             pm2 status payai-analytics-service
 
+  # --- Notification Service (Port 8006) ---
   deploy-notification-service:
     name: Notification (8006)
     runs-on: ubuntu-latest
-    needs: sync-shared
     if: >
       github.event_name == 'push' || 
       (github.event_name == 'workflow_dispatch' && 
@@ -464,13 +495,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Sync Shared Library
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "server/shared"
+          target: "~/payai-guardian/server"
+          overwrite: true
+          exclude: "node_modules"
+      
       - name: Sync Notification Service
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           source: "server/notification-service"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -482,27 +523,28 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             
             cd ~/payai-guardian/server/notification-service
             
-            npm ci --omit=dev --production
-            npm run build 2>/dev/null || echo "Building..."
+            echo "📦 Installing dependencies..."
+            npm ci --omit=dev
             
-            pm2 delete payai-notification-service 2>/dev/null || true
+            echo "🔨 Building..."
+            npm run build
             
-            PORT=8006 \
-            NODE_ENV=production \
-            API_GATEWAY_URL=http://localhost:8000 \
-            DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-            pm2 start dist/server.js --name "payai-notification-service"
-            
+            echo "🚀 Starting Notification on port 8006..."
+            pm2 restart payai-notification-service || pm2 start dist/server.js --name "payai-notification-service"
             pm2 save
+            
+            echo "✅ Notification deployed!"
             pm2 status payai-notification-service
 
+  # ===========================================
+  # DEPLOYMENT VERIFICATION
+  # ===========================================
   verify-deployment:
     name: Verify Deployment
     runs-on: ubuntu-latest
@@ -522,23 +564,15 @@ jobs:
       - name: Wait for Services to Start
         run: sleep 15
 
-      - name: Verify Services
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
-          script: |
-            echo "🔍 Verifying services..."
-            pm2 status
-            for port in 3002 8000 8001 8002 8003 8004 8005 8006; do
-              if curl -f -s -o /dev/null "http://localhost:$port"; then
-                echo "✅ Service on port $port is running"
-              else
-                echo "⚠️ Service on port $port is not responding"
-              fi
-            done
+      - name: Verify API Gateway
+        run: |
+          echo "🔍 Checking API Gateway on port 8000..."
+          curl -f -s -o /dev/null -w "HTTP %{http_code}\n" http://${{ secrets.SERVER_HOST }}:8000/health || echo "⚠️ API Gateway not responding"
+
+      - name: Verify Frontend
+        run: |
+          echo "🔍 Checking Frontend on port 3002..."
+          curl -f -s -o /dev/null -w "HTTP %{http_code}\n" http://${{ secrets.SERVER_HOST }}:3002 || echo "⚠️ Frontend not responding"
 
       - name: Deployment Summary
         if: success()
