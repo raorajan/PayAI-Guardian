@@ -46,9 +46,6 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # ===========================================
-  # SHARED SETUP - Sync shared library once
-  # ===========================================
   sync-shared:
     name: Sync Shared Library
     runs-on: ubuntu-latest
@@ -62,7 +59,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           source: "server/shared"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -74,16 +71,13 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           script: |
             cd ~/payai-guardian/server/shared
             if [ -f "package.json" ]; then
               npm ci --omit=dev --production 2>/dev/null || npm install --production
             fi
 
-  # ===========================================
-  # FRONTEND DEPLOYMENT
-  # ===========================================
   frontend-deploy:
     name: Frontend (Port 3002)
     runs-on: ubuntu-latest
@@ -118,7 +112,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           source: "client"
           target: "~/payai-guardian"
           overwrite: true
@@ -130,7 +124,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -145,11 +139,6 @@ jobs:
             pm2 save
             pm2 status payai-frontend
 
-  # ===========================================
-  # BACKEND SERVICES DEPLOYMENT
-  # ===========================================
-
-  # --- API Gateway (Port 8000) ---
   deploy-api-gateway:
     name: API Gateway (8000)
     runs-on: ubuntu-latest
@@ -168,7 +157,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           source: "server/api-gateway"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -180,7 +169,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -201,7 +190,6 @@ jobs:
             pm2 save
             pm2 status payai-gateway
 
-  # --- User Service (Port 8001) ---
   deploy-user-service:
     name: User Service (8001)
     runs-on: ubuntu-latest
@@ -220,7 +208,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           source: "server/user-services"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -232,7 +220,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -260,7 +248,6 @@ jobs:
             pm2 save
             pm2 status payai-user-service
 
-  # --- Payment Service (Port 8002) ---
   deploy-payment-service:
     name: Payment Service (8002)
     runs-on: ubuntu-latest
@@ -279,7 +266,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           source: "server/payment-service"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -291,7 +278,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -312,7 +299,6 @@ jobs:
             pm2 save
             pm2 status payai-payment-service
 
-  # --- Fraud Detection Service (Port 8003) ---
   deploy-fraud-service:
     name: Fraud Detection (8003)
     runs-on: ubuntu-latest
@@ -331,7 +317,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           source: "server/fraud-detection-service"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -343,7 +329,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -364,7 +350,6 @@ jobs:
             pm2 save
             pm2 status payai-fraud-service
 
-  # --- AI Banking Service (Port 8004) ---
   deploy-ai-service:
     name: AI Banking (8004)
     runs-on: ubuntu-latest
@@ -383,7 +368,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           source: "server/ai-banking-service"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -395,7 +380,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -416,7 +401,6 @@ jobs:
             pm2 save
             pm2 status payai-ai-service
 
-  # --- Analytics Service (Port 8005) ---
   deploy-analytics-service:
     name: Analytics (8005)
     runs-on: ubuntu-latest
@@ -435,7 +419,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           source: "server/analytics-service"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -447,7 +431,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -468,7 +452,6 @@ jobs:
             pm2 save
             pm2 status payai-analytics-service
 
-  # --- Notification Service (Port 8006) ---
   deploy-notification-service:
     name: Notification (8006)
     runs-on: ubuntu-latest
@@ -487,7 +470,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           source: "server/notification-service"
           target: "~/payai-guardian/server"
           overwrite: true
@@ -499,7 +482,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -520,9 +503,6 @@ jobs:
             pm2 save
             pm2 status payai-notification-service
 
-  # ===========================================
-  # DEPLOYMENT VERIFICATION
-  # ===========================================
   verify-deployment:
     name: Verify Deployment
     runs-on: ubuntu-latest
@@ -548,14 +528,10 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT | default(22) }}
+          port: ${{ secrets.SERVER_PORT }}
           script: |
             echo "🔍 Verifying services..."
-            
-            # Check PM2 status
             pm2 status
-            
-            # Check each service
             for port in 3002 8000 8001 8002 8003 8004 8005 8006; do
               if curl -f -s -o /dev/null "http://localhost:$port"; then
                 echo "✅ Service on port $port is running"
