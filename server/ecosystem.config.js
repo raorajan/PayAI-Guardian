@@ -1,120 +1,94 @@
 module.exports = {
   apps: [
-    // Frontend (Next.js)
     {
-      name: 'payai-frontend',
-      script: 'npm',
-      args: 'start',
-      cwd: '../client',
-      instances: 1,
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '1G',
-      env_production: {
-        NODE_ENV: 'production',
-        PORT: 3002
-      }
-    },
-
-    // API Gateway
-    {
-      name: 'payai-gateway',
-      script: 'api-gateway/dist/server.js',
-      cwd: './api-gateway',
-      instances: 1,
-      autorestart: true,
+      name: 'payai-api-gateway',
+      script: './api-gateway/server.js',
+      cwd: './server',
+      instances: 2,
+      exec_mode: 'cluster',
       watch: false,
       max_memory_restart: '500M',
       env_production: {
         NODE_ENV: 'production',
         PORT: 8000
-      }
+      },
+      error_file: './logs/api-gateway-error.log',
+      out_file: './logs/api-gateway-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
     },
-
-    // User Service
     {
       name: 'payai-user-service',
-      script: 'user-services/dist/server.js',
-      cwd: './user-services',
-      instances: 1,
-      autorestart: true,
+      script: './user-services/server.js',
+      cwd: './server',
+      instances: 2,
+      exec_mode: 'cluster',
       watch: false,
-      max_memory_restart: '500M',
+      max_memory_restart: '300M',
       env_production: {
         NODE_ENV: 'production',
         PORT: 8001
       }
     },
-
-    // Payment Service
     {
       name: 'payai-payment-service',
-      script: 'payment-service/dist/server.js',
-      cwd: './payment-service',
-      instances: 1,
-      autorestart: true,
+      script: './payment-service/server.js',
+      cwd: './server',
+      instances: 2,
+      exec_mode: 'cluster',
       watch: false,
-      max_memory_restart: '500M',
+      max_memory_restart: '400M',
       env_production: {
         NODE_ENV: 'production',
         PORT: 8002
       }
     },
-
-    // Fraud Detection Service
     {
-      name: 'payai-fraud-service',
-      script: 'fraud-detection-service/dist/server.js',
-      cwd: './fraud-detection-service',
+      name: 'payai-fraud-detection',
+      script: './fraud-detection-service/server.js',
+      cwd: './server',
       instances: 1,
-      autorestart: true,
+      exec_mode: 'fork',
       watch: false,
-      max_memory_restart: '500M',
+      max_memory_restart: '1G',
       env_production: {
         NODE_ENV: 'production',
         PORT: 8003
       }
     },
-
-    // AI Banking Service
     {
-      name: 'payai-ai-service',
-      script: 'ai-banking-service/dist/server.js',
-      cwd: './ai-banking-service',
-      instances: 1,
-      autorestart: true,
+      name: 'payai-ai-banking',
+      script: './ai-banking-service/server.js',
+      cwd: './server',
+      instances: 2,
+      exec_mode: 'cluster',
       watch: false,
-      max_memory_restart: '1G',
+      max_memory_restart: '800M',
       env_production: {
         NODE_ENV: 'production',
         PORT: 8004
       }
     },
-
-    // Analytics Service
     {
-      name: 'payai-analytics-service',
-      script: 'analytics-service/dist/server.js',
-      cwd: './analytics-service',
+      name: 'payai-analytics',
+      script: './analytics-service/server.js',
+      cwd: './server',
       instances: 1,
-      autorestart: true,
+      exec_mode: 'fork',
       watch: false,
-      max_memory_restart: '500M',
+      max_memory_restart: '600M',
       env_production: {
         NODE_ENV: 'production',
         PORT: 8005
       }
     },
-
-    // Notification Service
     {
-      name: 'payai-notification-service',
-      script: 'notification-service/dist/server.js',
-      cwd: './notification-service',
+      name: 'payai-notification',
+      script: './notification-service/server.js',
+      cwd: './server',
       instances: 1,
-      autorestart: true,
+      exec_mode: 'fork',
       watch: false,
-      max_memory_restart: '500M',
+      max_memory_restart: '200M',
       env_production: {
         NODE_ENV: 'production',
         PORT: 8006
