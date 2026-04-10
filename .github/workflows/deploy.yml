@@ -239,14 +239,23 @@ jobs:
             # Stop ONLY PayAI processes (not Next_Hire)
             pm2 list | grep 'payai' | awk '{print \$2}' | xargs -r pm2 delete
             
-            # Start PayAI services if ecosystem file exists
-            if [ -f \"ecosystem.config.js\" ]; then
-              pm2 start ecosystem.config.js --env production
-            elif [ -d \"server/api-gateway\" ]; then
-              # Manual start if no ecosystem file
-              cd server
-              pm2 start api-gateway/server.js --name payai-api-gateway -- --port 8000
-              pm2 start user-services/server.js --name payai-user-service -- --port 8001
+            # Start PayAI services with ecosystem file
+            if [ -f \"server/ecosystem.config.js\" ]; then
+              pm2 start server/ecosystem.config.js --env production
+            else
+              echo "❌ Ecosystem configuration file not found at server/ecosystem.config.js!"
+              exit 1
+            fi
+            
+            # Start Frontend
+            if [ -d \"client\" ] && [ -f \"client/package.json\" ]; then
+              echo '🚀 Starting frontend service...'
+              cd client
+              if pm2 list | grep -q 'payai-frontend'; then
+                pm2 restart payai-frontend
+              else
+                pm2 start npm --name payai-frontend -- run start -- --port 3002
+              fi
               cd ..
             fi
             
