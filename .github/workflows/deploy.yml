@@ -153,6 +153,9 @@ jobs:
       - name: Deploy PayAI Guardian (Isolated Deployment)
         run: |
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            export NVM_DIR="\$HOME/.nvm"
+            [ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"
+            
             set -e
             
             cd ${{ env.DEPLOY_PATH }}
