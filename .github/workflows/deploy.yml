@@ -237,7 +237,7 @@ jobs:
             fi
             
             # Stop ONLY PayAI processes (not Next_Hire)
-            pm2 list | grep 'payai' | awk '{print \$2}' | xargs -r pm2 delete
+            pm2 delete /payai/ || true
             
             # Start PayAI services with ecosystem file
             if [ -f \"server/ecosystem.config.js\" ]; then
