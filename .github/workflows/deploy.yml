@@ -29,41 +29,7 @@ jobs:
           echo "has_client=${{ hashFiles('client/package.json') != '' }}" >> $GITHUB_OUTPUT
           echo "Repository structure checked"
 
-  build-frontend:
-    runs-on: ubuntu-latest
-    needs: check-structure
-    if: needs.check-structure.outputs.has_client == 'true'
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      
-      - name: Install dependencies (with lock file generation)
-        working-directory: ./client
-        run: |
-          if [ -f "package-lock.json" ]; then
-            npm ci
-          else
-            npm install --package-lock-only
-            npm ci
-          fi
-      
-      - name: Build Next.js app
-        working-directory: ./client
-        run: npm run build
-        env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-      
-      - name: Upload frontend build
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-build
-          path: client/.next
-          retention-days: 1
+
 
   deploy:
     runs-on: ubuntu-latest
@@ -73,12 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Download frontend build
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-build
-          path: client/.next
-        continue-on-error: true
+
       
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
@@ -187,18 +148,23 @@ jobs:
             fi
             
             # Setup frontend if it exists
-            if [ -d \"client\" ] && [ -f \"client/package.json\" ]; then
+            if [ -d "client" ] && [ -f "client/package.json" ]; then
               echo '📦 Setting up frontend...'
               cd client
               
-              if [ -f \"package-lock.json\" ]; then
-                npm ci --production --silent || npm install --production
-              else
-                npm install --production
-              fi
-              
               # Create .env for frontend
               echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.local
+              
+              # Install all dependencies (including dev logic required for build)
+              if [ -f "package-lock.json" ]; then
+                npm ci --silent || npm install
+              else
+                npm install
+              fi
+              
+              # Build the frontend fully natively on the server
+              echo '🔨 Building Next.js...'
+              npm run build
               
               cd ..
             fi
