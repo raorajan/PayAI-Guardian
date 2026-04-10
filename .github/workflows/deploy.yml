@@ -10,8 +10,8 @@ on:
   workflow_dispatch:  # Allow manual trigger
 
 env:
-  DEPLOY_PATH: ~/payai-guardian
-  NEXT_HIRE_PATH: ~/Next_Hire_Job_Portal
+  DEPLOY_PATH: /home/ubuntu/payai-guardian
+  NEXT_HIRE_PATH: /home/ubuntu/Next_Hire_Job_Portal
   NODE_VERSION: '22.x'  # Updated to Node.js 22
 
 jobs:
