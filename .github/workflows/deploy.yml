@@ -179,6 +179,10 @@ jobs:
               echo '📦 Installing microservice dependencies...'
               npm run install:all
               
+              # Build all microservices
+              echo '🔨 Building microservices...'
+              npm run build:all
+              
               cd ..
             fi
             
