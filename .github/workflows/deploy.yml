@@ -194,43 +194,35 @@ jobs:
               fi
               
               # Create .env for frontend
-              cat > .env.local << EOF
-              NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-              EOF
+              echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.local
               
               cd ..
             fi
             
             # Create backend .env files if server exists
-            if [ -d \"server\" ]; then
+            if [ -d "server" ]; then
               cd server
               
               # API Gateway env
               mkdir -p api-gateway
-              cat > api-gateway/.env << 'EOF'
-              PORT=8000
-              NODE_ENV=production
-              JWT_SECRET=${{ secrets.JWT_SECRET }}
-              JWT_EXPIRE=${{ secrets.JWT_EXPIRE }}
-              DATABASE_URL=${{ secrets.DATABASE_URL }}
-              EOF
+              echo "PORT=8000" > api-gateway/.env
+              echo "NODE_ENV=production" >> api-gateway/.env
+              echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> api-gateway/.env
+              echo "JWT_EXPIRE=${{ secrets.JWT_EXPIRE }}" >> api-gateway/.env
+              echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> api-gateway/.env
               
               # User Services env
               mkdir -p user-services
-              cat > user-services/.env << 'EOF'
-              PORT=8001
-              NODE_ENV=production
-              JWT_SECRET=${{ secrets.JWT_SECRET }}
-              DATABASE_URL=${{ secrets.DATABASE_URL }}
-              EOF
+              echo "PORT=8001" > user-services/.env
+              echo "NODE_ENV=production" >> user-services/.env
+              echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> user-services/.env
+              echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> user-services/.env
               
               # Notification Service env
               mkdir -p notification-service
-              cat > notification-service/.env << 'EOF'
-              PORT=8006
-              NODE_ENV=production
-              RESEND_EMAIL_API_KEY=${{ secrets.RESEND_EMAIL_API_KEY }}
-              EOF
+              echo "PORT=8006" > notification-service/.env
+              echo "NODE_ENV=production" >> notification-service/.env
+              echo "RESEND_EMAIL_API_KEY=${{ secrets.RESEND_EMAIL_API_KEY }}" >> notification-service/.env
               
               cd ..
             fi
