@@ -172,6 +172,10 @@ jobs:
                 npm install --production
               fi
               
+              # Install all microservices dependencies
+              echo '📦 Installing microservice dependencies...'
+              npm run install:all
+              
               cd ..
             fi
             
