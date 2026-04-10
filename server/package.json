@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "install:all": "cd api-gateway && npm install && cd ../user-services && npm install && cd ../payment-service && npm install && cd ../fraud-detection-service && npm install && cd ../ai-banking-service && npm install && cd ../notification-service && npm install && cd ../analytics-service && npm install",
+    "install:all": "cd api-gateway && npm install && cd ../user-services && npm install && cd ../payment-service && npm install && cd ../fraud-detection-service && npm install && cd ../ai-banking-service && npm install && cd ../notification-service && npm install && cd ../analytics-service && npm install && cd ../shared && npm install",
     "build:all": "cd api-gateway && npm run build && cd ../user-services && npm run build && cd ../payment-service && npm run build && cd ../fraud-detection-service && npm run build && cd ../ai-banking-service && npm run build && cd ../notification-service && npm run build && cd ../analytics-service && npm run build",
     "start": "concurrently --kill-others --names \"GATEWAY,USER,PAYMENT,FRAUD,AI,NOTIF,ANALYTICS\" --prefix \"[{name}]\" --prefix-colors \"blue,green,magenta,cyan,yellow,white,gray\" \"npm run start:gateway\" \"npm run start:user\" \"npm run start:payment\" \"npm run start:fraud\" \"npm run start:ai-banking\" \"npm run start:notification\" \"npm run start:analytics\"",
     "start:gateway": "cd api-gateway && npm run dev --silent",
