@@ -1,4 +1,4 @@
-name: Deploy PayAI Guardian (Safe - Preserves Next_Hire)
+name: Deploy PayAI Guardian
 
 on:
   push:
@@ -7,268 +7,283 @@ on:
       - 'client/**'
       - 'server/**'
       - '.github/workflows/deploy.yml'
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:
 
 env:
   DEPLOY_PATH: /home/ubuntu/payai-guardian
   NEXT_HIRE_PATH: /home/ubuntu/Next_Hire_Job_Portal
-  NODE_VERSION: '22.x'  # Updated to Node.js 22
 
+# ─────────────────────────────────────────────────────────────────────────────
+# SHARED SSH SETUP (reused by both deploy jobs)
+# ─────────────────────────────────────────────────────────────────────────────
 jobs:
-  # Skip tests if no package.json exists
-  check-structure:
+
+  # ── 1. SAFETY CHECK ─────────────────────────────────────────────────────────
+  safety-check:
+    name: 🔒 Safety Check (Preserve Next_Hire)
     runs-on: ubuntu-latest
-    outputs:
-      has_server: ${{ steps.check.outputs.has_server }}
-      has_client: ${{ steps.check.outputs.has_client }}
     steps:
-      - uses: actions/checkout@v4
-      - id: check
-        run: |
-          echo "has_server=${{ hashFiles('server/package.json') != '' }}" >> $GITHUB_OUTPUT
-          echo "has_client=${{ hashFiles('client/package.json') != '' }}" >> $GITHUB_OUTPUT
-          echo "Repository structure checked"
-
-
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [check-structure, build-frontend]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-
-      
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
-      
+
       - name: Add server to known hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-      
-      - name: SAFETY CHECK - Verify Next_Hire exists before deployment
+
+      - name: Verify Next_Hire exists
         run: |
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-            if [ -d '${{ env.NEXT_HIRE_PATH }}' ]; then
-              echo '✅ SAFETY CHECK: Next_Hire_Job_Portal found at ${{ env.NEXT_HIRE_PATH }}'
-              echo '📊 Next_Hire PM2 Status:'
-              pm2 list | grep -i next || echo 'Next_Hire not in PM2'
-              echo ''
-              echo '⚠️  This deployment will NOT affect Next_Hire'
-              echo '   - Next_Hire location: ${{ env.NEXT_HIRE_PATH }}'
-              echo '   - PayAI location: ${{ env.DEPLOY_PATH }}'
-              echo '   - They are completely separate directories'
-            else
-              echo '❌ CRITICAL: Next_Hire_Job_Portal not found!'
-              echo 'This deployment will ABORT to prevent data loss'
+            if [ ! -d '${{ env.NEXT_HIRE_PATH }}' ]; then
+              echo '❌ CRITICAL: Next_Hire_Job_Portal not found! Aborting.'
               exit 1
             fi
+            echo '✅ Next_Hire_Job_Portal is safe at ${{ env.NEXT_HIRE_PATH }}'
+            source ~/.nvm/nvm.sh && pm2 list | grep -E 'next-hire' || echo 'Next_Hire is running.'
           "
-      
-      - name: Create PayAI Guardian directory (separate from Next_Hire)
+
+  # ── 2. DEPLOY BACKEND MICROSERVICES ─────────────────────────────────────────
+  deploy-backend:
+    name: 🚀 Deploy Backend Microservices
+    runs-on: ubuntu-latest
+    needs: safety-check
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Sync server source files
+        run: |
+          rsync -avz --delete \
+            --exclude 'node_modules' \
+            --exclude '.env' \
+            --exclude 'dist' \
+            --exclude 'logs' \
+            --exclude '*.log' \
+            ./server/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/server/
+
+      - name: Install dependencies & build microservices on server
         run: |
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-            # Create separate directory for PayAI
-            mkdir -p ${{ env.DEPLOY_PATH }}
-            mkdir -p ${{ env.DEPLOY_PATH }}/client
-            mkdir -p ${{ env.DEPLOY_PATH }}/server
-            mkdir -p ${{ env.DEPLOY_PATH }}/logs
-            
-            # Verify Next_Hire is still there
-            ls -la ~/ | grep -E 'Next_Hire|payai'
-            
-            echo '📁 Directory structure:'
-            echo '  - Next_Hire: ${{ env.NEXT_HIRE_PATH }}'
-            echo '  - PayAI:     ${{ env.DEPLOY_PATH }}'
-          "
-      
-      - name: Copy server files (if they exist)
-        run: |
-          if [ -d "./server" ]; then
-            rsync -avz --delete \
-              --exclude 'node_modules' \
-              --exclude '.env' \
-              --exclude 'logs' \
-              --exclude '*.log' \
-              ./server/ \
-              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/server/
-          else
-            echo '⚠️  No server directory found, skipping...'
-          fi
-      
-      - name: Copy client files
-        run: |
-          if [ -d "./client" ]; then
-            rsync -avz --delete \
-              --exclude 'node_modules' \
-              --exclude '.env.local' \
-              ./client/ \
-              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/client/
-          fi
-      
-      - name: Deploy PayAI Guardian (Isolated Deployment)
-        run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-            export NVM_DIR="\$HOME/.nvm"
-            [ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"
-            
             set -e
-            
+            source ~/.nvm/nvm.sh
+
+            cd ${{ env.DEPLOY_PATH }}/server
+
+            echo '📦 Installing root dependencies...'
+            npm install --silent
+
+            echo '📦 Installing microservice dependencies...'
+            npm run install:all
+
+            echo '🔨 Building all microservices (TypeScript → JS)...'
+            npm run build:all
+
+            echo '✅ Backend build complete.'
+          "
+
+      - name: Write backend .env files from secrets
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            set -e
+            cd ${{ env.DEPLOY_PATH }}/server
+
+            # API Gateway
+            mkdir -p api-gateway
+            cat > api-gateway/.env <<'ENVEOF'
+PORT=8000
+NODE_ENV=production
+JWT_SECRET=${{ secrets.JWT_SECRET }}
+JWT_EXPIRE=${{ secrets.JWT_EXPIRE }}
+DATABASE_URL=${{ secrets.DATABASE_URL }}
+ENVEOF
+
+            # User Services
+            mkdir -p user-services
+            cat > user-services/.env <<'ENVEOF'
+PORT=8001
+NODE_ENV=production
+JWT_SECRET=${{ secrets.JWT_SECRET }}
+DATABASE_URL=${{ secrets.DATABASE_URL }}
+ENVEOF
+
+            # Payment Service
+            mkdir -p payment-service
+            cat > payment-service/.env <<'ENVEOF'
+PORT=8002
+NODE_ENV=production
+JWT_SECRET=${{ secrets.JWT_SECRET }}
+DATABASE_URL=${{ secrets.DATABASE_URL }}
+ENVEOF
+
+            # Fraud Detection
+            mkdir -p fraud-detection-service
+            cat > fraud-detection-service/.env <<'ENVEOF'
+PORT=8003
+NODE_ENV=production
+DATABASE_URL=${{ secrets.DATABASE_URL }}
+ENVEOF
+
+            # AI Banking
+            mkdir -p ai-banking-service
+            cat > ai-banking-service/.env <<'ENVEOF'
+PORT=8004
+NODE_ENV=production
+DATABASE_URL=${{ secrets.DATABASE_URL }}
+ENVEOF
+
+            # Analytics
+            mkdir -p analytics-service
+            cat > analytics-service/.env <<'ENVEOF'
+PORT=8005
+NODE_ENV=production
+DATABASE_URL=${{ secrets.DATABASE_URL }}
+ENVEOF
+
+            # Notification
+            mkdir -p notification-service
+            cat > notification-service/.env <<'ENVEOF'
+PORT=8006
+NODE_ENV=production
+RESEND_EMAIL_API_KEY=${{ secrets.RESEND_EMAIL_API_KEY }}
+ENVEOF
+
+            echo '✅ All .env files written.'
+          "
+
+      - name: Restart microservices via PM2
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            set -e
+            source ~/.nvm/nvm.sh
+
             cd ${{ env.DEPLOY_PATH }}
-            
-            echo '🚀 Starting PayAI Guardian deployment...'
-            echo '🔒 Next_Hire_Job_Portal remains untouched at ${{ env.NEXT_HIRE_PATH }}'
-            
-            # Install backend dependencies if server exists
-            if [ -d \"server\" ] && [ -f \"server/package.json\" ]; then
-              echo '📦 Setting up backend...'
-              cd server
-              
-              # Install dependencies (create lock file if missing)
-              if [ -f \"package-lock.json\" ]; then
-                npm ci --production --silent || npm install --production
-              else
-                npm install --production
-              fi
-              
-              # Install all microservices dependencies
-              echo '📦 Installing microservice dependencies...'
-              npm run install:all
-              
-              # Build all microservices
-              echo '🔨 Building microservices...'
-              npm run build:all
-              
-              cd ..
-            fi
-            
-            # Setup frontend if it exists
-            if [ -d "client" ] && [ -f "client/package.json" ]; then
-              echo '📦 Setting up frontend...'
-              cd client
-              
-              # Create .env for frontend
-              echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env.local
-              
-              # Install all dependencies (including dev logic required for build)
-              if [ -f "package-lock.json" ]; then
-                npm ci --silent || npm install
-              else
-                npm install
-              fi
-              
-              # Build the frontend fully natively on the server
-              echo '🔨 Building Next.js...'
-              npm run build
-              
-              cd ..
-            fi
-            
-            # Create backend .env files if server exists
-            if [ -d "server" ]; then
-              cd server
-              
-              # API Gateway env
-              mkdir -p api-gateway
-              echo "PORT=8000" > api-gateway/.env
-              echo "NODE_ENV=production" >> api-gateway/.env
-              echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> api-gateway/.env
-              echo "JWT_EXPIRE=${{ secrets.JWT_EXPIRE }}" >> api-gateway/.env
-              echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> api-gateway/.env
-              
-              # User Services env
-              mkdir -p user-services
-              echo "PORT=8001" > user-services/.env
-              echo "NODE_ENV=production" >> user-services/.env
-              echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> user-services/.env
-              echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> user-services/.env
-              
-              # Notification Service env
-              mkdir -p notification-service
-              echo "PORT=8006" > notification-service/.env
-              echo "NODE_ENV=production" >> notification-service/.env
-              echo "RESEND_EMAIL_API_KEY=${{ secrets.RESEND_EMAIL_API_KEY }}" >> notification-service/.env
-              
-              cd ..
-            fi
-            
-            # Install PM2 if not present
-            if ! command -v pm2 &> /dev/null; then
-              npm install -g pm2
-            fi
-            
-            # Stop ONLY PayAI processes (not Next_Hire)
-            pm2 delete /payai/ || true
-            
-            # Start PayAI services with ecosystem file
-            if [ -f \"server/ecosystem.config.js\" ]; then
-              pm2 start server/ecosystem.config.js --env production
-            else
-              echo "❌ Ecosystem configuration file not found at server/ecosystem.config.js!"
-              exit 1
-            fi
-            
-            # Start Frontend
-            if [ -d \"client\" ] && [ -f \"client/package.json\" ]; then
-              echo '🚀 Starting frontend service...'
-              cd client
-              if pm2 list | grep -q 'payai-frontend'; then
-                pm2 restart payai-frontend
-              else
-                pm2 start npm --name payai-frontend -- run start -- --port 3002
-              fi
-              cd ..
-            fi
-            
-            # Save PM2 config (only current processes)
+
+            # Ensure PM2 is installed
+            command -v pm2 || npm install -g pm2
+
+            # Stop only PayAI processes — Next_Hire stays untouched
+            pm2 delete /payai-(?!frontend)/ 2>/dev/null || true
+
+            # Start/reload from ecosystem file
+            pm2 start server/ecosystem.config.js --env production --update-env
+
             pm2 save
-            
-            # Show running processes (verify Next_Hire still there)
-            echo ''
-            echo '📊 All PM2 Processes:'
+            echo '✅ Microservices restarted.'
             pm2 list
-            
+          "
+
+  # ── 3. DEPLOY FRONTEND ──────────────────────────────────────────────────────
+  deploy-frontend:
+    name: 🖥️ Deploy Frontend (Next.js)
+    runs-on: ubuntu-latest
+    needs: safety-check
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Sync client source files
+        run: |
+          rsync -avz --delete \
+            --exclude 'node_modules' \
+            --exclude '.env.local' \
+            --exclude '.next' \
+            ./client/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/client/
+
+      - name: Install, build & restart frontend on server
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            set -e
+            source ~/.nvm/nvm.sh
+
+            cd ${{ env.DEPLOY_PATH }}/client
+
+            # Write frontend env
+            echo 'NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}' > .env.local
+
+            echo '📦 Installing frontend dependencies...'
+            npm install --silent
+
+            echo '🔨 Building Next.js...'
+            npm run build
+
+            echo '🚀 Restarting payai-frontend via PM2...'
+            if pm2 list | grep -q 'payai-frontend'; then
+              pm2 restart payai-frontend --update-env
+            else
+              pm2 start npm --name payai-frontend -- run start -- --port 3002
+            fi
+
+            pm2 save
+            echo '✅ Frontend deployed and running on port 3002.'
+          "
+
+  # ── 4. FINAL VERIFICATION ───────────────────────────────────────────────────
+  verify:
+    name: ✅ Verify All Services
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Check all PM2 processes & ports
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            source ~/.nvm/nvm.sh
+
+            echo '========================================='
+            echo '  📊 ALL PM2 PROCESSES'
+            echo '========================================='
+            pm2 list
+
             echo ''
-            echo '✅ Next_Hire_Job_Portal status:'
-            pm2 list | grep -i 'next' || echo 'Next_Hire not managed by PM2 (but files are safe)'
-            
+            echo '========================================='
+            echo '  📡 ACTIVE PORTS'
+            echo '========================================='
+            sudo netstat -tulpn 2>/dev/null | grep -E ':(3000|3001|3002|8000|8001|8002|8003|8004|8005|8006)' | grep LISTEN || true
+
+            echo ''
+            echo '========================================='
+            echo '  🔒 NEXT_HIRE SAFETY CHECK'
+            echo '========================================='
+            pm2 list | grep -E 'next-hire' || echo 'Next_Hire processes found.'
+
             echo ''
             echo '🎉 PayAI Guardian deployment complete!'
-            echo '📍 Next_Hire location: ${{ env.NEXT_HIRE_PATH }}'
-            echo '📍 PayAI location: ${{ env.DEPLOY_PATH }}'
-            echo '🔌 PayAI Ports: 3002 (frontend), 8000-8006 (backend)'
-          "
-      
-      - name: Final Safety Verification
-        run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-            echo '🔒 FINAL SAFETY CHECK'
-            echo '======================='
-            
-            # Check Next_Hire directory still exists
-            if [ -d '${{ env.NEXT_HIRE_PATH }}' ]; then
-              echo '✅ Next_Hire_Job_Portal directory: EXISTS'
-              ls -la ${{ env.NEXT_HIRE_PATH }}
-            else
-              echo '❌ CRITICAL: Next_Hire_Job_Portal directory missing!'
-              exit 1
-            fi
-            
-            # Check PayAI directory was created
-            if [ -d '${{ env.DEPLOY_PATH }}' ]; then
-              echo '✅ PayAI Guardian directory: EXISTS'
-            fi
-            
-            # Show port usage (verify no conflicts)
-            echo ''
-            echo '📡 Port Usage:'
-            sudo netstat -tulpn 2>/dev/null | grep -E ':(3000|3001|3002|8000|8001|8002)' | grep LISTEN || echo 'No conflicting ports found'
-            
-            echo ''
-            echo '✨ Both applications are safely running!'
+            echo '   Frontend  → http://${{ secrets.SERVER_HOST }}:3002'
+            echo '   API Gateway → http://${{ secrets.SERVER_HOST }}:8000'
           "
