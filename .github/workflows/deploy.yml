@@ -13,9 +13,6 @@ env:
   DEPLOY_PATH: /home/ubuntu/payai-guardian
   NEXT_HIRE_PATH: /home/ubuntu/Next_Hire_Job_Portal
 
-# ─────────────────────────────────────────────────────────────────────────────
-# SHARED SSH SETUP (reused by both deploy jobs)
-# ─────────────────────────────────────────────────────────────────────────────
 jobs:
 
   # ── 1. SAFETY CHECK ─────────────────────────────────────────────────────────
@@ -33,18 +30,25 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Verify Next_Hire exists
+      - name: Verify Next_Hire exists and is running
         run: |
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            set -e
             if [ ! -d '${{ env.NEXT_HIRE_PATH }}' ]; then
               echo '❌ CRITICAL: Next_Hire_Job_Portal not found! Aborting.'
               exit 1
             fi
-            echo '✅ Next_Hire_Job_Portal is safe at ${{ env.NEXT_HIRE_PATH }}'
-            source ~/.nvm/nvm.sh && pm2 list | grep -E 'next-hire' || echo 'Next_Hire is running.'
+            echo '✅ Next_Hire_Job_Portal directory is safe.'
+            source ~/.nvm/nvm.sh
+            # FIX: Correct logic — warn if next-hire processes are NOT found
+            if pm2 list | grep -q 'next-hire'; then
+              echo '✅ Next_Hire PM2 processes are running.'
+            else
+              echo '⚠️  Warning: next-hire processes not found in PM2.'
+            fi
           "
 
-  # ── 2. DEPLOY BACKEND MICROSERVICES ─────────────────────────────────────────
+  # ── 2. DEPLOY BACKEND MICROSERVICES ──────────────────────────────────────────
   deploy-backend:
     name: 🚀 Deploy Backend Microservices
     runs-on: ubuntu-latest
@@ -96,73 +100,100 @@ jobs:
           "
 
       - name: Write backend .env files from secrets
+        # FIX: Use double-quoted heredoc (ENVEOF without quotes) so that
+        #      GitHub Actions secret values are expanded by the shell.
+        #      We pass secrets as env vars to the SSH command to avoid
+        #      shell injection and ensure correct expansion.
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRE: ${{ secrets.JWT_EXPIRE }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RESEND_EMAIL_API_KEY: ${{ secrets.RESEND_EMAIL_API_KEY }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          API_GATEWAY_URL: ${{ secrets.API_GATEWAY_URL }}
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "JWT_SECRET='${JWT_SECRET}' \
+             JWT_EXPIRE='${JWT_EXPIRE}' \
+             DATABASE_URL='${DATABASE_URL}' \
+             RESEND_EMAIL_API_KEY='${RESEND_EMAIL_API_KEY}' \
+             FRONTEND_URL='${FRONTEND_URL}' \
+             OPENAI_API_KEY='${OPENAI_API_KEY}' \
+             API_GATEWAY_URL='${API_GATEWAY_URL}' \
+             bash -s" << 'SSHEOF'
             set -e
             cd ${{ env.DEPLOY_PATH }}/server
 
             # API Gateway
             mkdir -p api-gateway
-            cat > api-gateway/.env <<'ENVEOF'
+            cat > api-gateway/.env << ENVEOF
 PORT=8000
 NODE_ENV=production
-JWT_SECRET=${{ secrets.JWT_SECRET }}
-JWT_EXPIRE=${{ secrets.JWT_EXPIRE }}
-DATABASE_URL=${{ secrets.DATABASE_URL }}
+JWT_SECRET=${JWT_SECRET}
+JWT_EXPIRE=${JWT_EXPIRE}
+DATABASE_URL=${DATABASE_URL}
+FRONTEND_URL=${FRONTEND_URL}
 ENVEOF
 
-            # User Services
+            # User Service
             mkdir -p user-services
-            cat > user-services/.env <<'ENVEOF'
+            cat > user-services/.env << ENVEOF
 PORT=8001
 NODE_ENV=production
-JWT_SECRET=${{ secrets.JWT_SECRET }}
-DATABASE_URL=${{ secrets.DATABASE_URL }}
+JWT_SECRET=${JWT_SECRET}
+JWT_EXPIRE=${JWT_EXPIRE}
+DATABASE_URL=${DATABASE_URL}
+FRONTEND_URL=${FRONTEND_URL}
+API_GATEWAY_URL=${API_GATEWAY_URL}
+RESEND_EMAIL_API_KEY=${RESEND_EMAIL_API_KEY}
 ENVEOF
 
             # Payment Service
             mkdir -p payment-service
-            cat > payment-service/.env <<'ENVEOF'
+            cat > payment-service/.env << ENVEOF
 PORT=8002
 NODE_ENV=production
-JWT_SECRET=${{ secrets.JWT_SECRET }}
-DATABASE_URL=${{ secrets.DATABASE_URL }}
+JWT_SECRET=${JWT_SECRET}
+DATABASE_URL=${DATABASE_URL}
 ENVEOF
 
-            # Fraud Detection
+            # Fraud Detection Service
             mkdir -p fraud-detection-service
-            cat > fraud-detection-service/.env <<'ENVEOF'
+            cat > fraud-detection-service/.env << ENVEOF
 PORT=8003
 NODE_ENV=production
-DATABASE_URL=${{ secrets.DATABASE_URL }}
+JWT_SECRET=${JWT_SECRET}
+DATABASE_URL=${DATABASE_URL}
 ENVEOF
 
-            # AI Banking
+            # AI Banking Service
             mkdir -p ai-banking-service
-            cat > ai-banking-service/.env <<'ENVEOF'
+            cat > ai-banking-service/.env << ENVEOF
 PORT=8004
 NODE_ENV=production
-DATABASE_URL=${{ secrets.DATABASE_URL }}
+DATABASE_URL=${DATABASE_URL}
+OPENAI_API_KEY=${OPENAI_API_KEY}
 ENVEOF
 
-            # Analytics
+            # Analytics Service
             mkdir -p analytics-service
-            cat > analytics-service/.env <<'ENVEOF'
+            cat > analytics-service/.env << ENVEOF
 PORT=8005
 NODE_ENV=production
-DATABASE_URL=${{ secrets.DATABASE_URL }}
+DATABASE_URL=${DATABASE_URL}
 ENVEOF
 
-            # Notification
+            # Notification Service
             mkdir -p notification-service
-            cat > notification-service/.env <<'ENVEOF'
+            cat > notification-service/.env << ENVEOF
 PORT=8006
 NODE_ENV=production
-RESEND_EMAIL_API_KEY=${{ secrets.RESEND_EMAIL_API_KEY }}
+RESEND_EMAIL_API_KEY=${RESEND_EMAIL_API_KEY}
 ENVEOF
 
             echo '✅ All .env files written.'
-          "
+SSHEOF
 
       - name: Restart microservices via PM2
         run: |
@@ -170,23 +201,29 @@ ENVEOF
             set -e
             source ~/.nvm/nvm.sh
 
-            cd ${{ env.DEPLOY_PATH }}
+            # FIX: Run from DEPLOY_PATH so ecosystem.config.js cwd paths
+            #      (./api-gateway, ./user-services, etc.) resolve correctly
+            cd ${{ env.DEPLOY_PATH }}/server
 
-            # Ensure PM2 is installed
+            # Ensure PM2 is installed globally
             command -v pm2 || npm install -g pm2
 
-            # Stop only PayAI processes — Next_Hire stays untouched
-            pm2 delete /payai-(?!frontend)/ 2>/dev/null || true
+            # FIX: Delete PayAI backend processes by name (no regex lookahead).
+            #      List them explicitly to avoid accidentally touching payai-frontend
+            #      or any Next_Hire processes.
+            for svc in payai-api-gateway payai-user-service payai-payment-service payai-fraud-detection payai-ai-banking payai-analytics payai-notification; do
+              pm2 delete \$svc 2>/dev/null || true
+            done
 
-            # Start/reload from ecosystem file
-            pm2 start server/ecosystem.config.js --env production --update-env
+            # Start all services from ecosystem config
+            pm2 start ecosystem.config.js --env production --update-env
 
             pm2 save
             echo '✅ Microservices restarted.'
             pm2 list
           "
 
-  # ── 3. DEPLOY FRONTEND ──────────────────────────────────────────────────────
+  # ── 3. DEPLOY FRONTEND ───────────────────────────────────────────────────────
   deploy-frontend:
     name: 🖥️ Deploy Frontend (Next.js)
     runs-on: ubuntu-latest
@@ -216,15 +253,18 @@ ENVEOF
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_PATH }}/client/
 
       - name: Install, build & restart frontend on server
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "NEXT_PUBLIC_API_URL='${NEXT_PUBLIC_API_URL}' bash -s" << 'SSHEOF'
             set -e
             source ~/.nvm/nvm.sh
 
             cd ${{ env.DEPLOY_PATH }}/client
 
-            # Write frontend env
-            echo 'NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}' > .env.local
+            # Write frontend env — expansion works because we passed the var via env above
+            echo "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}" > .env.local
 
             echo '📦 Installing frontend dependencies...'
             npm install --silent
@@ -233,17 +273,19 @@ ENVEOF
             npm run build
 
             echo '🚀 Restarting payai-frontend via PM2...'
+            # FIX: package.json "start" script already includes -p 3002,
+            #      so just run `npm run start`, no extra --port flag needed.
             if pm2 list | grep -q 'payai-frontend'; then
               pm2 restart payai-frontend --update-env
             else
-              pm2 start npm --name payai-frontend -- run start -- --port 3002
+              pm2 start npm --name payai-frontend -- run start
             fi
 
             pm2 save
             echo '✅ Frontend deployed and running on port 3002.'
-          "
+SSHEOF
 
-  # ── 4. FINAL VERIFICATION ───────────────────────────────────────────────────
+  # ── 4. FINAL VERIFICATION ────────────────────────────────────────────────────
   verify:
     name: ✅ Verify All Services
     runs-on: ubuntu-latest
@@ -280,10 +322,16 @@ ENVEOF
             echo '========================================='
             echo '  🔒 NEXT_HIRE SAFETY CHECK'
             echo '========================================='
-            pm2 list | grep -E 'next-hire' || echo 'Next_Hire processes found.'
+            # FIX: Correct message — show processes if found, warn if absent
+            if pm2 list | grep -q 'next-hire'; then
+              pm2 list | grep 'next-hire'
+              echo '✅ Next_Hire processes are healthy.'
+            else
+              echo '⚠️  Warning: next-hire processes not detected in PM2.'
+            fi
 
             echo ''
             echo '🎉 PayAI Guardian deployment complete!'
-            echo '   Frontend  → http://${{ secrets.SERVER_HOST }}:3002'
+            echo '   Frontend    → http://${{ secrets.SERVER_HOST }}:3002'
             echo '   API Gateway → http://${{ secrets.SERVER_HOST }}:8000'
           "

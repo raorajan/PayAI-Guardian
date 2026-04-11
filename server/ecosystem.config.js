@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'payai-api-gateway',
       script: './dist/server.js',
-      cwd: './server/api-gateway',
+      cwd: './api-gateway',
       instances: 2,
       exec_mode: 'cluster',
       watch: false,
@@ -19,7 +19,7 @@ module.exports = {
     {
       name: 'payai-user-service',
       script: './dist/server.js',
-      cwd: './server/user-services',
+      cwd: './user-services',
       instances: 2,
       exec_mode: 'cluster',
       watch: false,
@@ -32,7 +32,7 @@ module.exports = {
     {
       name: 'payai-payment-service',
       script: './dist/server.js',
-      cwd: './server/payment-service',
+      cwd: './payment-service',
       instances: 2,
       exec_mode: 'cluster',
       watch: false,
@@ -45,7 +45,7 @@ module.exports = {
     {
       name: 'payai-fraud-detection',
       script: './dist/server.js',
-      cwd: './server/fraud-detection-service',
+      cwd: './fraud-detection-service',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
@@ -58,7 +58,7 @@ module.exports = {
     {
       name: 'payai-ai-banking',
       script: './dist/server.js',
-      cwd: './server/ai-banking-service',
+      cwd: './ai-banking-service',
       instances: 2,
       exec_mode: 'cluster',
       watch: false,
@@ -71,7 +71,7 @@ module.exports = {
     {
       name: 'payai-analytics',
       script: './dist/server.js',
-      cwd: './server/analytics-service',
+      cwd: './analytics-service',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
@@ -84,7 +84,7 @@ module.exports = {
     {
       name: 'payai-notification',
       script: './dist/server.js',
-      cwd: './server/notification-service',
+      cwd: './notification-service',
       instances: 1,
       exec_mode: 'fork',
       watch: false,
