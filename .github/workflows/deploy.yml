@@ -67,6 +67,13 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Create deployment directories on server
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            mkdir -p ${{ env.DEPLOY_PATH }}/server
+            mkdir -p ${{ env.DEPLOY_PATH }}/client
+          "
+
       - name: Sync server source files
         run: |
           rsync -avz --delete \
@@ -225,6 +232,12 @@ jobs:
             "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}" \
             > ./client/.env.local
           echo '✅ Frontend .env.local generated.'
+
+      - name: Create client deployment directory on server
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            mkdir -p ${{ env.DEPLOY_PATH }}/client
+          "
 
       - name: Sync client source files (includes .env.local)
         run: |
