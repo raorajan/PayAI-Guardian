@@ -107,7 +107,7 @@ jobs:
             "JWT_SECRET=${JWT_SECRET}" \
             "JWT_EXPIRE=${JWT_EXPIRE}" \
             "DATABASE_URL=${DATABASE_URL}" \
-            "FRONTEND_URL=${FRONTEND_URL}" \
+            "FRONTEND_URL=http://${SERVER_HOST}:3002" \
             "CORS_ALLOWED_ORIGINS=http://${SERVER_HOST}:3002" \
             > ./server/api-gateway/.env
 
@@ -118,8 +118,8 @@ jobs:
             "JWT_SECRET=${JWT_SECRET}" \
             "JWT_EXPIRE=${JWT_EXPIRE}" \
             "DATABASE_URL=${DATABASE_URL}" \
-            "FRONTEND_URL=${FRONTEND_URL}" \
-            "API_GATEWAY_URL=${API_GATEWAY_URL}" \
+            "FRONTEND_URL=http://${SERVER_HOST}:3002" \
+            "API_GATEWAY_URL=http://${SERVER_HOST}:8000" \
             "RESEND_EMAIL_API_KEY=${RESEND_EMAIL_API_KEY}" \
             > ./server/user-services/.env
 
@@ -228,7 +228,7 @@ jobs:
       # second SSH command just to write one line on the server.
       - name: Generate frontend .env.local on runner
         env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_API_URL: http://${{ secrets.SERVER_HOST }}:8000
         run: |
           printf '%s\n' \
             "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}" \
