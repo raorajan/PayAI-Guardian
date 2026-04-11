@@ -108,7 +108,7 @@ jobs:
             "JWT_EXPIRE=${JWT_EXPIRE}" \
             "DATABASE_URL=${DATABASE_URL}" \
             "FRONTEND_URL=${FRONTEND_URL}" \
-            "CORS_ALLOWED_ORIGINS=http://payaiguardian.raorajan.pro" \
+            "CORS_ALLOWED_ORIGINS=https://payaiguardian.raorajan.pro" \
             > ./server/api-gateway/.env
 
           # User Service (port 8001)
