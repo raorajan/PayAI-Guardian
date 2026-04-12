@@ -1,0 +1,168 @@
+tags:
+  - name: Auth
+    description: User authentication endpoints (Register, Login, Password Reset)
+servers:
+  - url: http://localhost:8000
+    description: API Gateway
+paths:
+  /api/v1/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        201:
+          description: User registered successfully
+        400:
+          description: Missing fields
+        409:
+          description: Email already registered
+
+  /api/v1/login:
+    post:
+      tags:
+        - Auth
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: Login successful
+        401:
+          description: Invalid credentials
+
+  /api/v1/forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: Request password reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        200:
+          description: Reset link sent if email exists
+  /api/v1/verify:
+    get:
+      tags:
+        - Auth
+      summary: Verify user email
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Verification token sent to the user's email
+      responses:
+        200:
+          description: Email verified successfully
+        400:
+          description: Invalid or missing token
+        404:
+          description: User not found
+  /api/v1/reset-password:
+    post:
+      tags:
+        - Auth
+      summary: Reset user password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        200:
+          description: Password reset successful
+        400:
+          description: Invalid or expired token
+        404:
+          description: User not found
+  /api/v1/resend-verification:
+    post:
+      tags:
+        - Auth
+      summary: Resend email verification link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        200:
+          description: Verification email sent
+        404:
+          description: User not found
+
+  /api/v1/auth/google:
+    get:
+      tags:
+        - Auth
+      summary: Initiate Google Social Login
+      description: Redirects the user to Google's OAuth 2.0 consent screen.
+      responses:
+        302:
+          description: Redirects to Google
+
+  /api/v1/auth/google/callback:
+    get:
+      tags:
+        - Auth
+      summary: Google OAuth callback
+      description: Handles the redirect back from Google after user authorization.
+      responses:
+        302:
+          description: Redirects to frontend with JWT token
+
+  /api/v1/auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: User profile fetched successfully
+        401:
+          description: Unauthorized
+        404:
+          description: User not found

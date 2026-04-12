@@ -14,6 +14,7 @@ const express_http_proxy_1 = __importDefault(require("express-http-proxy"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 8000;
+app.set('trust proxy', 1);
 const API_USER_URL = process.env.API_USER_URL || 'http://localhost:8001';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 // 1. Helmet Configuration - Before CORS
@@ -32,7 +33,7 @@ app.use((req, res, next) => {
         }
         else {
             // Production mode: validate origin
-            const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+            const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3002'];
             if (origin && allowedOrigins.includes(origin)) {
                 res.header('Access-Control-Allow-Origin', origin);
             }
@@ -59,7 +60,7 @@ const corsOptions = {
         if (!origin)
             return callback(null, true);
         // Production mode: validate against allowed origins
-        const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+        const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3002'];
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         }
@@ -126,7 +127,7 @@ const processCorsHeaders = (headers, req) => {
         headers['Access-Control-Allow-Origin'] = origin || '*';
     }
     else if (origin) {
-        const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+        const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3002'];
         if (allowedOrigins.includes(origin)) {
             headers['Access-Control-Allow-Origin'] = origin;
         }
@@ -142,7 +143,7 @@ app.use('/api/v1', (0, express_http_proxy_1.default)(API_USER_URL, {
     proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
         proxyReqOpts.headers = {
             ...proxyReqOpts.headers,
-            'Origin': srcReq.headers.origin || 'http://localhost:3000',
+            'Origin': srcReq.headers.origin || 'http://localhost:3002',
         };
         return proxyReqOpts;
     },
