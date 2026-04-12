@@ -158,6 +158,10 @@ app.use('/api/v1', proxy(API_USER_URL, {
     };
     return proxyReqOpts;
   },
+  // Ensure the body is correctly forwarded after being parsed by express.json()
+  proxyReqBodyDecorator: (bodyContent, srcReq) => {
+    return srcReq.body && Object.keys(srcReq.body).length ? JSON.stringify(srcReq.body) : bodyContent;
+  },
   // Process CORS headers on response
   userResHeaderDecorator: (headers, req) => processCorsHeaders(headers, req as Request)
 }));
