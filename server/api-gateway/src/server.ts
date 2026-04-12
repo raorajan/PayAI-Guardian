@@ -32,7 +32,7 @@ app.use((req: Request, res: Response, next) => {
     res.header('Access-Control-Allow-Origin', origin || '*');
   } else {
     // Production mode: validate origin
-    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3002'];
     if (origin && allowedOrigins.includes(origin)) {
       res.header('Access-Control-Allow-Origin', origin);
     }
@@ -62,7 +62,7 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     
     // Production mode: validate against allowed origins
-    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3002'];
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -134,7 +134,7 @@ const processCorsHeaders = (headers: any, req: Request) => {
   if (NODE_ENV !== 'production') {
     headers['Access-Control-Allow-Origin'] = origin || '*';
   } else if (origin) {
-    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3002'];
     if (allowedOrigins.includes(origin)) {
       headers['Access-Control-Allow-Origin'] = origin;
     }
@@ -153,7 +153,7 @@ app.use('/api/v1', proxy(API_USER_URL, {
   proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
     proxyReqOpts.headers = {
       ...proxyReqOpts.headers,
-      'Origin': srcReq.headers.origin || 'http://localhost:3000',
+      'Origin': srcReq.headers.origin || 'http://localhost:3002',
     };
     return proxyReqOpts;
   },
