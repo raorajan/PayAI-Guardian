@@ -534,3 +534,11 @@ export const googleOneTap = awaitHandlerFactory(async (req: Request, res: Respon
     });
   }
 });
+
+export const logout = awaitHandlerFactory(async (req: Request, res: Response) => {
+  res.status(200).json({
+    statusCode: 200,
+    success: true,
+    message: 'Logged out successfully'
+  });
+});

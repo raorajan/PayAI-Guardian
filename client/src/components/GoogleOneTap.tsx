@@ -57,7 +57,7 @@ export default function GoogleOneTap() {
         if (data.success) {
           setToken(data.data.token);
           await dispatch(getProfile()).unwrap();
-          toast.success("Login successful via Google One Tap!");
+          toast.success("Login successful!");
           router.refresh();
         } else {
           toast.error(data.message || "Google One Tap login failed");

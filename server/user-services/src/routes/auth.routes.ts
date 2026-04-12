@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, forgotPassword, verifyEmail, resetPassword, resendVerification, socialCallback, getMe, googleOneTap } from '../controllers/auth.controller';
+import { register, login, forgotPassword, verifyEmail, resetPassword, resendVerification, socialCallback, getMe, googleOneTap, logout } from '../controllers/auth.controller';
 import passport from 'passport';
 import isAuthenticatedUser from '../middlewares/auth.middleware';
 
@@ -7,6 +7,7 @@ const authRouter = Router();
 
 authRouter.post('/register', register);
 authRouter.post('/login', login);
+authRouter.post('/logout', logout);
 authRouter.post('/forgot-password', forgotPassword);
 authRouter.get('/verify', verifyEmail);
 authRouter.post('/reset-password', resetPassword);
