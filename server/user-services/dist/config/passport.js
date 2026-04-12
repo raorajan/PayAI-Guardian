@@ -10,15 +10,25 @@ const models_1 = require("../models");
 const drizzle_orm_1 = require("drizzle-orm");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+const googleCallbackURL = (() => {
+    const baseUrl = (process.env.AUTH_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
+    // If baseUrl already ends with the callback path, don't append it again
+    if (baseUrl.endsWith('/api/v1/auth/google/callback')) {
+        return baseUrl;
+    }
+    return `${baseUrl}/api/v1/auth/google/callback`;
+})();
+console.log('--- PASSPORT GOOGLE STRATEGY INITIALIZED ---');
+console.log('Callback URL:', googleCallbackURL);
 // Google Strategy
 passport_1.default.use(new passport_google_oauth20_1.Strategy({
     clientID: process.env.CLIENT_ID || 'dummy',
     clientSecret: process.env.CLIENT_SECRET || 'dummy',
-    callbackURL: `${process.env.AUTH_SERVICE_URL}/api/v1/auth/google/callback`,
+    callbackURL: googleCallbackURL,
     passReqToCallback: true,
     proxy: true,
 }, async (req, accessToken, refreshToken, profile, done) => {
-    console.log('--- GOOGLE AUTH CALLBACK URL:', `${process.env.AUTH_SERVICE_URL}/api/v1/auth/google/callback`);
+    console.log('--- GOOGLE AUTH CALLBACK RECEIVED ---');
     try {
         const email = profile.emails?.[0].value;
         if (!email)

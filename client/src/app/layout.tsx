@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import ReduxProvider from "@/components/ReduxProvider";
+import Script from "next/script";
+import GoogleOneTap from "@/components/GoogleOneTap";
 import "./globals.css";
 
 const inter = Inter({
@@ -34,7 +36,14 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <ReduxProvider>{children}</ReduxProvider>
+        <ReduxProvider>
+          <GoogleOneTap />
+          {children}
+        </ReduxProvider>
+        <Script 
+          src="https://accounts.google.com/gsi/client" 
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

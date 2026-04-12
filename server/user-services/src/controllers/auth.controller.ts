@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { OAuth2Client } from 'google-auth-library';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -442,4 +443,94 @@ export const getMe = awaitHandlerFactory(async (req: AuthRequest, res: Response)
       }
     }
   });
+});
+
+const googleClient = new OAuth2Client(process.env.CLIENT_ID);
+
+export const googleOneTap = awaitHandlerFactory(async (req: Request, res: Response) => {
+  const { credential } = req.body;
+  
+  if (!credential) {
+    return res.status(400).json({
+      statusCode: 400,
+      success: false,
+      message: 'Credential is required'
+    });
+  }
+
+  try {
+    // Verify the ID token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    
+    if (!payload || !payload.email) {
+      return res.status(400).json({
+        statusCode: 400,
+        success: false,
+        message: 'Invalid Google token payload'
+      });
+    }
+
+    const { email, sub: googleId, name, picture } = payload;
+
+    // Find or create user
+    let existing = await db.select().from(users).where(eq(users.googleId, googleId));
+    let user;
+
+    if (existing.length) {
+      user = existing[0];
+    } else {
+      // Check if user exists by email
+      existing = await db.select().from(users).where(eq(users.email, email));
+      if (existing.length) {
+        // Link account
+        const updated = await db.update(users)
+          .set({ googleId, isVerified: true, updatedAt: new Date() })
+          .where(eq(users.id, existing[0].id))
+          .returning();
+        user = updated[0];
+      } else {
+        // Create new user
+        const inserted = await db.insert(users).values({
+          fullName: name || 'Google User',
+          email,
+          googleId,
+          isVerified: true,
+        }).returning();
+        user = inserted[0];
+      }
+    }
+
+    // Generate token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email }, 
+      process.env.JWT_SECRET!, 
+      { expiresIn: (process.env.JWT_EXPIRE as any) || '7d' }
+    );
+
+    res.status(200).json({ 
+      statusCode: 200,
+      success: true, 
+      message: 'Google One Tap login successful',
+      data: { 
+        token,
+        user: { 
+          id: user.id, 
+          email: user.email, 
+          fullName: user.fullName,
+          isVerified: user.isVerified
+        }
+      } 
+    });
+  } catch (error) {
+    console.error('GOOGLE ONE TAP ERROR:', error);
+    res.status(401).json({
+      statusCode: 401,
+      success: false,
+      message: 'Invalid Google credential'
+    });
+  }
 });

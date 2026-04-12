@@ -3,7 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMe = exports.socialCallback = exports.resendVerification = exports.verifyEmail = exports.resetPassword = exports.forgotPassword = exports.login = exports.register = void 0;
+exports.googleOneTap = exports.getMe = exports.socialCallback = exports.resendVerification = exports.verifyEmail = exports.resetPassword = exports.forgotPassword = exports.login = exports.register = void 0;
+const google_auth_library_1 = require("google-auth-library");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const database_1 = require("../config/database");
@@ -363,6 +364,7 @@ exports.socialCallback = (0, awaitHandlerFactory_middleware_1.default)(async (re
     // Generate token for social login
     const token = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE || '7d' });
     // Redirect to frontend with token in URL (frontend will parse and store it)
+    console.log('--- REDIRECTING TO:', process.env.FRONTEND_URL);
     res.redirect(`${process.env.FRONTEND_URL}/auth?token=${token}`);
 });
 exports.getMe = (0, awaitHandlerFactory_middleware_1.default)(async (req, res) => {
@@ -390,4 +392,83 @@ exports.getMe = (0, awaitHandlerFactory_middleware_1.default)(async (req, res) =
             }
         }
     });
+});
+const googleClient = new google_auth_library_1.OAuth2Client(process.env.CLIENT_ID);
+exports.googleOneTap = (0, awaitHandlerFactory_middleware_1.default)(async (req, res) => {
+    const { credential } = req.body;
+    if (!credential) {
+        return res.status(400).json({
+            statusCode: 400,
+            success: false,
+            message: 'Credential is required'
+        });
+    }
+    try {
+        // Verify the ID token
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+        if (!payload || !payload.email) {
+            return res.status(400).json({
+                statusCode: 400,
+                success: false,
+                message: 'Invalid Google token payload'
+            });
+        }
+        const { email, sub: googleId, name, picture } = payload;
+        // Find or create user
+        let existing = await database_1.db.select().from(models_1.users).where((0, drizzle_orm_1.eq)(models_1.users.googleId, googleId));
+        let user;
+        if (existing.length) {
+            user = existing[0];
+        }
+        else {
+            // Check if user exists by email
+            existing = await database_1.db.select().from(models_1.users).where((0, drizzle_orm_1.eq)(models_1.users.email, email));
+            if (existing.length) {
+                // Link account
+                const updated = await database_1.db.update(models_1.users)
+                    .set({ googleId, isVerified: true, updatedAt: new Date() })
+                    .where((0, drizzle_orm_1.eq)(models_1.users.id, existing[0].id))
+                    .returning();
+                user = updated[0];
+            }
+            else {
+                // Create new user
+                const inserted = await database_1.db.insert(models_1.users).values({
+                    fullName: name || 'Google User',
+                    email,
+                    googleId,
+                    isVerified: true,
+                }).returning();
+                user = inserted[0];
+            }
+        }
+        // Generate token
+        const token = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE || '7d' });
+        res.status(200).json({
+            statusCode: 200,
+            success: true,
+            message: 'Google One Tap login successful',
+            data: {
+                token,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    fullName: user.fullName,
+                    isVerified: user.isVerified
+                }
+            }
+        });
+    }
+    catch (error) {
+        console.error('GOOGLE ONE TAP ERROR:', error);
+        res.status(401).json({
+            statusCode: 401,
+            success: false,
+            message: 'Invalid Google credential'
+        });
+    }
 });

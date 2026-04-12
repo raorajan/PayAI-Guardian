@@ -235,9 +235,11 @@ jobs:
       - name: Generate frontend .env.local on runner
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
         run: |
           printf '%s\n' \
             "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}" \
+            "NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}" \
             > ./client/.env.local
           echo '✅ Frontend .env.local generated.'
 

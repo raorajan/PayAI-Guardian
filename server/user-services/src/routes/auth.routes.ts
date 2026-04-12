@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, forgotPassword, verifyEmail, resetPassword, resendVerification, socialCallback, getMe } from '../controllers/auth.controller';
+import { register, login, forgotPassword, verifyEmail, resetPassword, resendVerification, socialCallback, getMe, googleOneTap } from '../controllers/auth.controller';
 import passport from 'passport';
 import isAuthenticatedUser from '../middlewares/auth.middleware';
 
@@ -16,5 +16,6 @@ authRouter.get('/auth/me', isAuthenticatedUser, getMe);
 // Social Auth Routes
 authRouter.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 authRouter.get('/auth/google/callback', passport.authenticate('google', { session: false }), socialCallback);
+authRouter.post('/auth/google-one-tap', googleOneTap);
 
 export default authRouter;

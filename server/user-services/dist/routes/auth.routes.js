@@ -18,4 +18,5 @@ authRouter.get('/auth/me', auth_middleware_1.default, auth_controller_1.getMe);
 // Social Auth Routes
 authRouter.get('/auth/google', passport_1.default.authenticate('google', { scope: ['profile', 'email'] }));
 authRouter.get('/auth/google/callback', passport_1.default.authenticate('google', { session: false }), auth_controller_1.socialCallback);
+authRouter.post('/auth/google-one-tap', auth_controller_1.googleOneTap);
 exports.default = authRouter;
