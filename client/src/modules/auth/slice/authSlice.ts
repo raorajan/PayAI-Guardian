@@ -118,6 +118,20 @@ export const resendEmailVerification = createAsyncThunk(
   }
 );
 
+export const getProfile = createAsyncThunk(
+  "auth/getProfile",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response: any = await authAction.getMe();
+      return response.data || response;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || error?.response?.data || { message: "Failed to fetch profile" }
+      );
+    }
+  }
+);
+
 const auth = createSlice({
   name: "auth",
   initialState,
@@ -225,6 +239,23 @@ const auth = createSlice({
       .addCase(resendEmailVerification.rejected, (state, action: any) => {
         state.loading = false;
         state.error = action.payload?.message || "Resend failed";
+      })
+      
+      // Get Profile
+      .addCase(getProfile.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        const payload = action.payload;
+        state.user = payload?.data?.user || payload?.user || null;
+        state.isAuthenticated = true;
+      })
+      .addCase(getProfile.rejected, (state, action: any) => {
+        state.loading = false;
+        state.isAuthenticated = false;
+        state.user = null;
+        removeToken();
       });
   },
 });

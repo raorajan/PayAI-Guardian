@@ -414,3 +414,31 @@ export const socialCallback = awaitHandlerFactory(async (req: Request, res: Resp
   // Redirect to frontend with token in URL (frontend will parse and store it)
   res.redirect(`${process.env.FRONTEND_URL}/auth?token=${token}`);
 });
+
+export const getMe = awaitHandlerFactory(async (req: AuthRequest, res: Response) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(404).json({
+      statusCode: 404,
+      success: false,
+      message: 'User profile not found'
+    });
+  }
+
+  res.status(200).json({
+    statusCode: 200,
+    success: true,
+    message: 'Profile fetched successfully',
+    data: {
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        isVerified: user.isVerified,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    }
+  });
+});

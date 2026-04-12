@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/redux/store';
-import { loginUser, clearAuthState } from '../slice/authSlice';
+import { loginUser, clearAuthState, getProfile } from '../slice/authSlice';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
 import { setToken } from '../../../services/utils';
@@ -31,6 +31,7 @@ export default function LoginForm({ setView }: LoginFormProps) {
 
     if (token) {
       setToken(token);
+      dispatch(getProfile());
       toast.success('Social login successful!');
       setTimeout(() => router.push('/'), 800);
     } else if (error) {

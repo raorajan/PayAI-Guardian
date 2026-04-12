@@ -29,3 +29,8 @@ export const resendVerification = async (data: any) => {
   const url = `api/v1/resend-verification`;
   return await fetchFromApiServer("POST", url, data, {}, null);
 };
+
+export const getMe = async () => {
+  const url = `api/v1/auth/me`;
+  return await fetchFromApiServer("GET", url, null, {}, null);
+};

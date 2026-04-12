@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { register, login, forgotPassword, verifyEmail, resetPassword, resendVerification, socialCallback } from '../controllers/auth.controller';
+import { register, login, forgotPassword, verifyEmail, resetPassword, resendVerification, socialCallback, getMe } from '../controllers/auth.controller';
 import passport from 'passport';
+import isAuthenticatedUser from '../middlewares/auth.middleware';
 
 const authRouter = Router();
 
@@ -10,6 +11,7 @@ authRouter.post('/forgot-password', forgotPassword);
 authRouter.get('/verify', verifyEmail);
 authRouter.post('/reset-password', resetPassword);
 authRouter.post('/resend-verification', resendVerification);
+authRouter.get('/auth/me', isAuthenticatedUser, getMe);
 
 // Social Auth Routes
 authRouter.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
