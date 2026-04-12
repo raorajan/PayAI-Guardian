@@ -7,18 +7,30 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const googleCallbackURL = (() => {
+  const baseUrl = (process.env.AUTH_SERVICE_URL || 'http://localhost:8000').replace(/\/$/, '');
+  // If baseUrl already ends with the callback path, don't append it again
+  if (baseUrl.endsWith('/api/v1/auth/google/callback')) {
+    return baseUrl;
+  }
+  return `${baseUrl}/api/v1/auth/google/callback`;
+})();
+
+console.log('--- PASSPORT GOOGLE STRATEGY INITIALIZED ---');
+console.log('Callback URL:', googleCallbackURL);
+
 // Google Strategy
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.CLIENT_ID || 'dummy',
       clientSecret: process.env.CLIENT_SECRET || 'dummy',
-      callbackURL: `${process.env.AUTH_SERVICE_URL}/api/v1/auth/google/callback`,
+      callbackURL: googleCallbackURL,
       passReqToCallback: true,
       proxy: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
-      console.log('--- GOOGLE AUTH CALLBACK URL:', `${process.env.AUTH_SERVICE_URL}/api/v1/auth/google/callback`);
+      console.log('--- GOOGLE AUTH CALLBACK RECEIVED ---');
       try {
         const email = profile.emails?.[0].value;
         if (!email) return done(new Error('No email found in Google profile'));
