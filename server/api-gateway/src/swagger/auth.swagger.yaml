@@ -112,3 +112,57 @@ paths:
           description: Invalid or expired token
         404:
           description: User not found
+  /api/v1/resend-verification:
+    post:
+      tags:
+        - Auth
+      summary: Resend email verification link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        200:
+          description: Verification email sent
+        404:
+          description: User not found
+
+  /api/v1/auth/google:
+    get:
+      tags:
+        - Auth
+      summary: Initiate Google Social Login
+      description: Redirects the user to Google's OAuth 2.0 consent screen.
+      responses:
+        302:
+          description: Redirects to Google
+
+  /api/v1/auth/google/callback:
+    get:
+      tags:
+        - Auth
+      summary: Google OAuth callback
+      description: Handles the redirect back from Google after user authorization.
+      responses:
+        302:
+          description: Redirects to frontend with JWT token
+
+  /api/v1/auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: User profile fetched successfully
+        401:
+          description: Unauthorized
+        404:
+          description: User not found

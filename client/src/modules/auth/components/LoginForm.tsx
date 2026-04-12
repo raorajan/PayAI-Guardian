@@ -61,7 +61,7 @@ export default function LoginForm({ setView }: LoginFormProps) {
 
   const handleSocialLogin = (provider: string) => {
     // Redirect to backend social auth route
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL;
     window.location.href = `${backendUrl}/api/v1/auth/${provider.toLowerCase()}`;
   };
 
