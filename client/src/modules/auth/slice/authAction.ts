@@ -24,3 +24,8 @@ export const emailVerification = async (token: any) => {
   const url = `api/v1/verify?token=${token}`;
   return await fetchFromApiServer("GET", url, null, {}, null);
 };
+
+export const resendVerification = async (data: any) => {
+  const url = `api/v1/resend-verification`;
+  return await fetchFromApiServer("POST", url, data, {}, null);
+};

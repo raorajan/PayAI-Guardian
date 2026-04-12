@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/redux/store';
 import { loginUser, clearAuthState } from '../slice/authSlice';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
+import { setToken } from '../../../services/utils';
 
 interface LoginFormProps {
   setView?: (view: 'signin' | 'signup' | 'forgot') => void;
@@ -11,19 +12,57 @@ interface LoginFormProps {
 
 export default function LoginForm({ setView }: LoginFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((state) => state.auth);
   const toast = useToast();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showResend, setShowResend] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
+
+  // Handle social login callback (token in URL)
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const error = searchParams.get('error');
+
+    if (token) {
+      setToken(token);
+      toast.success('Social login successful!');
+      setTimeout(() => router.push('/'), 800);
+    } else if (error) {
+      toast.error(error);
+    }
+  }, [searchParams, router, toast]);
 
   // Clear errors when component mounts
   useEffect(() => {
     dispatch(clearAuthState());
   }, [dispatch]);
+
+  const handleResend = async () => {
+    if (!email) {
+      toast.error('Please enter your email first');
+      return;
+    }
+    try {
+      // @ts-ignore
+      await dispatch(require('../slice/authSlice').resendEmailVerification({ email })).unwrap();
+      toast.success('Verification email resent!');
+      setShowResend(false);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to resend email');
+    }
+  };
+
+  const handleSocialLogin = (provider: string) => {
+    // Redirect to backend social auth route
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    window.location.href = `${backendUrl}/api/v1/auth/${provider.toLowerCase()}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,8 +87,8 @@ export default function LoginForm({ setView }: LoginFormProps) {
       
       // If email not verified (403), redirect to verification page
       if (err?.statusCode === 403) {
-        toast.warning('Email not verified. Please check your inbox or verify your email.');
-       
+        toast.warning('Email not verified. Please check your inbox.');
+        setShowResend(true);
         return;
       }
       
@@ -110,13 +149,27 @@ export default function LoginForm({ setView }: LoginFormProps) {
           </button>
         </div>
 
-        {/* Forgot */}
-        <div className="text-right -mt-1">
+        <div className="flex items-center justify-between -mt-1">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)}
+              className="w-3.5 h-3.5 rounded border-white/10 bg-white/5 accent-[#00C8FF] cursor-pointer" />
+            <span className="text-xs text-white/40 group-hover:text-white/60 transition-colors">Remember me</span>
+          </label>
           <button type="button" onClick={() => setView?.('forgot')}
             className="text-xs text-[#00C8FF] bg-transparent border-none cursor-pointer hover:text-white transition-colors font-medium">
             Forgot Password?
           </button>
         </div>
+
+        {showResend && (
+          <div className="bg-[#00C8FF]/10 border border-[#00C8FF]/20 rounded-lg p-2.5 flex items-center justify-between anim-fade-in">
+            <span className="text-[11px] text-white/70">Didn't get the email?</span>
+            <button type="button" onClick={handleResend}
+              className="text-[11px] font-bold text-[#00C8FF] hover:text-white transition-colors bg-transparent border-none cursor-pointer">
+              Resend Now
+            </button>
+          </div>
+        )}
 
         {/* Login button */}
         <button type="submit" disabled={loading}
@@ -157,7 +210,7 @@ export default function LoginForm({ setView }: LoginFormProps) {
           { label: 'Apple',  icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.14-2.2 1.3-2.18 3.87.03 3.02 2.65 4.03 2.68 4.04l-.05.17zM13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg> },
           { label: 'MS',     icon: <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#F25022" d="M1 1h10v10H1z"/><path fill="#7FBA00" d="M13 1h10v10H13z"/><path fill="#00A4EF" d="M1 13h10v10H1z"/><path fill="#FFB900" d="M13 13h10v10H13z"/></svg> },
         ].map(({ label, icon }) => (
-          <button key={label} type="button" title={label}
+          <button key={label} type="button" title={label} onClick={() => handleSocialLogin(label)}
             className="w-[54px] h-[42px] flex items-center justify-center bg-white/5 border border-white/[0.09] rounded-[10px] cursor-pointer hover:bg-white/10 transition-colors">
             {icon}
           </button>

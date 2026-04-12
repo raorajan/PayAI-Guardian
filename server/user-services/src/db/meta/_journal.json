@@ -8,6 +8,13 @@
       "when": 1775561466500,
       "tag": "0000_red_mystique",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775968797041,
+      "tag": "0001_nice_kree",
+      "breakpoints": true
     }
   ]
 }

@@ -4,12 +4,15 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { connectDB } from './config/database';
 import authRoutes from './routes/auth.routes';
+import passport from './config/passport';
 
 dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 8001;
 app.use(helmet()); 
+app.use(passport.initialize());
+
 // CORS is handled by API Gateway - disable here to prevent conflicts
 // app.use(cors()); 
 app.use(express.json()); 

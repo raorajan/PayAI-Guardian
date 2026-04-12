@@ -27,6 +27,22 @@ export default function RegisterForm({ setView }: RegisterFormProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFormData({ ...formData, [e.target.id]: e.target.value });
 
+  const calculatePasswordStrength = (pwd: string) => {
+    let score = 0;
+    if (!pwd) return 0;
+    if (pwd.length >= 8) score += 1;
+    if (/[A-Z]/.test(pwd)) score += 1;
+    if (/[a-z]/.test(pwd)) score += 1;
+    if (/[0-9]/.test(pwd)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
+    return score;
+  };
+
+  const strength = calculatePasswordStrength(formData.password);
+  const passwordsMatch = formData.password && formData.confirmPassword 
+    ? formData.password === formData.confirmPassword 
+    : null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -35,13 +51,13 @@ export default function RegisterForm({ setView }: RegisterFormProps) {
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (!passwordsMatch) {
       toast.error('Passwords do not match');
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (formData.password.length < 8) {
+      toast.error('Password must be at least 8 characters');
       return;
     }
 
@@ -52,7 +68,6 @@ export default function RegisterForm({ setView }: RegisterFormProps) {
         password: formData.password 
       })).unwrap();
       
-      // Success - show toast and redirect
       toast.success('Registration successful! Please check your email.');
       
       setTimeout(() => {
@@ -72,7 +87,7 @@ export default function RegisterForm({ setView }: RegisterFormProps) {
     `flex items-center gap-2.5 px-3.5 py-[11px] rounded-[10px] border transition-all duration-200 bg-white/[0.04] ${
       focused === field
         ? 'border-[#00C8FF] shadow-[0_0_0_3px_rgba(0,200,255,0.12)]'
-        : 'border-white/10'
+        : (field === 'confirmPassword' && passwordsMatch === false) ? 'border-red-500/50' : 'border-white/10'
     }`;
 
   const iconColor = (f: string) => focused === f ? 'text-[#00C8FF]' : 'text-white/30';
@@ -83,14 +98,12 @@ export default function RegisterForm({ setView }: RegisterFormProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Heading */}
       <div className="text-center">
         <h2 className="text-2xl font-extrabold text-white m-0 mb-1">Create Account</h2>
         <p className="text-[13px] text-white/45 m-0">Join PayAI Guardian</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
-        {/* Full Name */}
         <div className={inputWrapper('name')}>
           <svg className={`w-[15px] h-[15px] shrink-0 ${iconColor('name')}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -101,7 +114,6 @@ export default function RegisterForm({ setView }: RegisterFormProps) {
             placeholder="Full Name" required />
         </div>
 
-        {/* Email */}
         <div className={inputWrapper('email')}>
           <svg className={`w-[15px] h-[15px] shrink-0 ${iconColor('email')}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -112,9 +124,7 @@ export default function RegisterForm({ setView }: RegisterFormProps) {
             placeholder="Email Address" required />
         </div>
 
-        {/* Password row — side by side */}
         <div className="grid grid-cols-2 gap-2.5">
-          {/* Password */}
           <div className={inputWrapper('password')}>
             <svg className={`w-[14px] h-[14px] shrink-0 ${iconColor('password')}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
@@ -125,9 +135,11 @@ export default function RegisterForm({ setView }: RegisterFormProps) {
               placeholder="Password" required />
           </div>
 
-          {/* Confirm Password */}
           <div className={inputWrapper('confirmPassword')}>
-            <svg className={`w-[14px] h-[14px] shrink-0 ${iconColor('confirmPassword')}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`w-[14px] h-[14px] shrink-0 ${
+              passwordsMatch === false ? 'text-red-400' : 
+              passwordsMatch === true ? 'text-green-400' : iconColor('confirmPassword')
+            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
             </svg>
             <input id="confirmPassword" type={showPwd ? 'text' : 'password'} value={formData.confirmPassword} onChange={handleChange}
@@ -136,6 +148,36 @@ export default function RegisterForm({ setView }: RegisterFormProps) {
               placeholder="Confirm" required />
           </div>
         </div>
+
+        {/* Password Strength Meter */}
+        {formData.password && (
+          <div className="px-1 -mt-1">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[10px] text-white/40 uppercase tracking-wider font-bold">Security Level</span>
+              <span className={`text-[10px] font-bold ${
+                strength <= 2 ? 'text-red-400' : strength <= 4 ? 'text-yellow-400' : 'text-green-400'
+              }`}>
+                {strength <= 1 ? 'Weak' : strength <= 3 ? 'Medium' : strength <= 4 ? 'Strong' : 'Military Grade'}
+              </span>
+            </div>
+            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden flex gap-0.5">
+              {[1, 2, 3, 4, 5].map((step) => (
+                <div key={step} className={`h-full flex-1 transition-all duration-500 ${
+                  step <= strength 
+                    ? (strength <= 2 ? 'bg-red-500' : strength <= 4 ? 'bg-yellow-500' : 'bg-[#00C8FF]') 
+                    : 'bg-transparent'
+                }`} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* passwords mismatch hint */}
+        {passwordsMatch === false && (
+          <div className="text-[10px] text-red-400 font-medium px-1 -mt-1 anim-fade-in">
+            Passwords do not match
+          </div>
+        )}
 
         {/* Checkboxes row */}
         <div className="flex items-center gap-3 mt-0.5">

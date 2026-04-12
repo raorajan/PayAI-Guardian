@@ -78,6 +78,14 @@ export const login = awaitHandlerFactory(async (req: Request, res: Response) => 
     });
   }
 
+  if (!user.passwordHash) {
+    return res.status(401).json({ 
+      statusCode: 401,
+      success: false, 
+      message: 'This account uses social login. Please sign in with Google, Microsoft, or Apple.' 
+    });
+  }
+
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) {
     return res.status(401).json({ 
@@ -300,11 +308,19 @@ export const verifyEmail = awaitHandlerFactory(async (req: Request, res: Respons
       });
     }
 
+    // Generate token for auto-login after verification
+    const loginToken = jwt.sign(
+      { userId: result[0].id, email: result[0].email }, 
+      process.env.JWT_SECRET!, 
+      { expiresIn: (process.env.JWT_EXPIRE as any) || '7d' }
+    );
+
     res.status(200).json({ 
       statusCode: 200,
       success: true, 
-      message: 'Email verified successfully. You can now log in.',
+      message: 'Email verified successfully. Logging you in...',
       data: {
+        token: loginToken,
         user: {
           id: result[0].id,
           email: result[0].email,
@@ -327,4 +343,74 @@ export const verifyEmail = awaitHandlerFactory(async (req: Request, res: Respons
       message: 'Invalid verification token' 
     });
   }
+});
+
+export const resendVerification = awaitHandlerFactory(async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ 
+      statusCode: 400,
+      success: false, 
+      message: 'Email is required' 
+    });
+  }
+
+  const rows = await db.select().from(users).where(eq(users.email, email));
+  const user = rows?.[0];
+  
+  if (!user) {
+    return res.status(404).json({ 
+      statusCode: 404,
+      success: false, 
+      message: 'User not found' 
+    });
+  }
+
+  if (user.isVerified) {
+    return res.status(400).json({ 
+      statusCode: 400,
+      success: false, 
+      message: 'Email is already verified' 
+    });
+  }
+
+  // Generate verification token and link
+  const verificationToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, { expiresIn: '24h' });
+  const verificationLink = `${process.env.FRONTEND_URL}/auth/verify-email?token=${verificationToken}`;
+  
+  // Send verification email
+  await sendEmail({
+    from: 'Security PayAI <security@raorajan.pro>',
+    to: email,
+    subject: 'Resend: Verify Your Email - PayAI Guardian',
+    html: `
+      <h1>Verify Your Email - PayAI Guardian</h1>
+      <p>You requested to resend the verification email. Please verify your email by clicking the link below:</p>
+      <a href="${verificationLink}">Verify Email Address</a>
+      <p>This link will expire in 24 hours.</p>
+    `
+  });
+
+  res.status(200).json({ 
+    statusCode: 200,
+    success: true, 
+    message: 'Verification email sent successfully' 
+  });
+});
+
+export const socialCallback = awaitHandlerFactory(async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (!user) {
+    return res.redirect(`${process.env.FRONTEND_URL}/auth?error=Social login failed`);
+  }
+
+  // Generate token for social login
+  const token = jwt.sign(
+    { userId: user.id, email: user.email }, 
+    process.env.JWT_SECRET!, 
+    { expiresIn: (process.env.JWT_EXPIRE as any) || '7d' }
+  );
+
+  // Redirect to frontend with token in URL (frontend will parse and store it)
+  res.redirect(`${process.env.FRONTEND_URL}/auth?token=${token}`);
 });

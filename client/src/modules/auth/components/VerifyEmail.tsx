@@ -47,12 +47,12 @@ export default function VerifyEmailPage() {
         
         setVerificationStatus('success');
         setUserInfo(result?.data?.user || null);
-        toast.success(result?.message || 'Email verified successfully!');
+        toast.success(result?.message || 'Email verified and logged in successfully!');
         
-        // Redirect to login after 3 seconds
+        // Redirect to dashboard after 2 seconds (auto-login enabled)
         setTimeout(() => {
-          router.push('/auth/signin');
-        }, 3000);
+          router.push('/');
+        }, 2000);
       } catch (err: any) {
         // Error response structure:
         // {

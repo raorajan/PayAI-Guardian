@@ -103,6 +103,19 @@ export const resetPassword = createAsyncThunk(
       );
     }
   }
+)
+export const resendEmailVerification = createAsyncThunk(
+  "auth/resendVerification",
+  async (data: any, { rejectWithValue }) => {
+    try {
+      const response: any = await authAction.resendVerification(data);
+      return response.data || response;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || error?.response?.data || { message: "Resend verification failed" }
+      );
+    }
+  }
 );
 
 const auth = createSlice({
@@ -160,7 +173,15 @@ const auth = createSlice({
       })
       .addCase(verifyEmail.fulfilled, (state, action) => {
         state.loading = false;
-        state.message = action.payload?.message || "Email verified successfully";
+        const payload = action.payload;
+        if (payload?.data?.token) {
+          setToken(payload.data.token);
+          state.user = payload.data.user;
+          state.isAuthenticated = true;
+          state.message = payload.message || "Email verified and logged in successfully";
+        } else {
+          state.message = payload?.message || "Email verified successfully";
+        }
       })
       .addCase(verifyEmail.rejected, (state, action: any) => {
         state.loading = false;
@@ -191,6 +212,19 @@ const auth = createSlice({
       .addCase(resetPassword.rejected, (state, action: any) => {
         state.loading = false;
         state.error = action.payload?.message || "Reset password failed";
+      })
+      
+      // Resend Verification
+      .addCase(resendEmailVerification.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(resendEmailVerification.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload?.message || "Verification email resent";
+      })
+      .addCase(resendEmailVerification.rejected, (state, action: any) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Resend failed";
       });
   },
 });
