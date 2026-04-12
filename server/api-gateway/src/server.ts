@@ -11,6 +11,7 @@ dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 8000;
+app.set('trust proxy', 1);
 const API_USER_URL = process.env.API_USER_URL || 'http://localhost:8001';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 

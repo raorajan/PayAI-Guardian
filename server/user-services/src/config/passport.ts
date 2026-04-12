@@ -18,6 +18,7 @@ passport.use(
       proxy: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
+      console.log('--- GOOGLE AUTH CALLBACK URL:', `${process.env.AUTH_SERVICE_URL}/api/v1/auth/google/callback`);
       try {
         const email = profile.emails?.[0].value;
         if (!email) return done(new Error('No email found in Google profile'));
