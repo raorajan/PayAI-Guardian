@@ -100,8 +100,8 @@ jobs:
           API_GATEWAY_URL: ${{ secrets.API_GATEWAY_URL }}
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           AUTH_SERVICE_URL: ${{ secrets.AUTH_SERVICE_URL }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
         run: |
           # API Gateway (port 8000)
           printf '%s\n' \
