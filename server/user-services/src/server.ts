@@ -10,6 +10,7 @@ dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 8001;
+app.set('trust proxy', 1);
 app.use(helmet()); 
 app.use(passport.initialize());
 

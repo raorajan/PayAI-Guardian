@@ -15,6 +15,7 @@ passport.use(
       clientSecret: process.env.CLIENT_SECRET || 'dummy',
       callbackURL: `${process.env.AUTH_SERVICE_URL}/api/v1/auth/google/callback`,
       passReqToCallback: true,
+      proxy: true,
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {
