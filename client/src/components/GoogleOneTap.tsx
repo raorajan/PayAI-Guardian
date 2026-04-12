@@ -44,7 +44,7 @@ export default function GoogleOneTap() {
 
     const handleCredentialResponse = async (response: any) => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/google-one-tap`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/google-one-tap`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
