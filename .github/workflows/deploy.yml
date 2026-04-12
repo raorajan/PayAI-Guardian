@@ -100,8 +100,8 @@ jobs:
           API_GATEWAY_URL: ${{ secrets.API_GATEWAY_URL }}
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           AUTH_SERVICE_URL: ${{ secrets.AUTH_SERVICE_URL }}
-          GOOGLE_CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
         run: |
           # API Gateway (port 8000)
           printf '%s\n' \
@@ -125,8 +125,8 @@ jobs:
             "API_GATEWAY_URL=${API_GATEWAY_URL}" \
             "RESEND_EMAIL_API_KEY=${RESEND_EMAIL_API_KEY}" \
             "AUTH_SERVICE_URL=${AUTH_SERVICE_URL}" \
-            "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" \
-            "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}" \
+            "CLIENT_ID=${CLIENT_ID}" \
+            "CLIENT_SECRET=${CLIENT_SECRET}" \
             > ./server/user-services/.env
 
           # Payment Service (port 8002)
