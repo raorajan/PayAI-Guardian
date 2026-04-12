@@ -15,10 +15,4 @@ authRouter.post('/resend-verification', resendVerification);
 authRouter.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 authRouter.get('/auth/google/callback', passport.authenticate('google', { session: false }), socialCallback);
 
-authRouter.get('/auth/microsoft', passport.authenticate('microsoft', { scope: ['user.read'] }));
-authRouter.get('/auth/microsoft/callback', passport.authenticate('microsoft', { session: false }), socialCallback);
-
-authRouter.get('/auth/apple', passport.authenticate('apple'));
-authRouter.post('/auth/apple/callback', passport.authenticate('apple', { session: false }), socialCallback);
-
 export default authRouter;

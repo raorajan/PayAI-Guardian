@@ -99,6 +99,9 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           API_GATEWAY_URL: ${{ secrets.API_GATEWAY_URL }}
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          AUTH_SERVICE_URL: ${{ secrets.AUTH_SERVICE_URL }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           # API Gateway (port 8000)
           printf '%s\n' \
@@ -121,6 +124,9 @@ jobs:
             "FRONTEND_URL=${FRONTEND_URL}" \
             "API_GATEWAY_URL=${API_GATEWAY_URL}" \
             "RESEND_EMAIL_API_KEY=${RESEND_EMAIL_API_KEY}" \
+            "AUTH_SERVICE_URL=${AUTH_SERVICE_URL}" \
+            "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" \
+            "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}" \
             > ./server/user-services/.env
 
           # Payment Service (port 8002)

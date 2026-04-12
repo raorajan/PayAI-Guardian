@@ -82,7 +82,7 @@ export const login = awaitHandlerFactory(async (req: Request, res: Response) => 
     return res.status(401).json({ 
       statusCode: 401,
       success: false, 
-      message: 'This account uses social login. Please sign in with Google, Microsoft, or Apple.' 
+      message: 'This account uses social login. Please sign in with Google.' 
     });
   }
 
