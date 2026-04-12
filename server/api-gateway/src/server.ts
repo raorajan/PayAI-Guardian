@@ -149,6 +149,7 @@ const processCorsHeaders = (headers: any, req: Request) => {
 // Catch-all for /api/v1 to proxy to User Service
 app.use('/api/v1', proxy(API_USER_URL, {
   proxyReqPathResolver: (req) => req.originalUrl,
+  preserveHostHdr: true,
   // Preserve headers
   proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
     proxyReqOpts.headers = {

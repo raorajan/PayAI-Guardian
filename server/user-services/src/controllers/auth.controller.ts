@@ -412,6 +412,7 @@ export const socialCallback = awaitHandlerFactory(async (req: Request, res: Resp
   );
 
   // Redirect to frontend with token in URL (frontend will parse and store it)
+  console.log('--- REDIRECTING TO:', process.env.FRONTEND_URL);
   res.redirect(`${process.env.FRONTEND_URL}/auth?token=${token}`);
 });
 
