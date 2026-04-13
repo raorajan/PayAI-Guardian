@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 
 const stats = [
   {
@@ -49,28 +49,98 @@ const stats = [
 ];
 
 export default function BalanceCard() {
+  const [currency, setCurrency] = useState("USD");
+  const [selectedAccount, setSelectedAccount] = useState("all");
+
+  const totalBalance = 24847.50;
+  const availableBalance = 22347.50;
+  const pendingBalance = 2500.00;
+  const dailyChange = 3.2;
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className="rounded-[16px] p-5 backdrop-blur-xl relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-default"
-          style={{ background: "rgba(8,12,30,0.7)", border: "1px solid rgba(255,255,255,0.07)" }}
-        >
-          <div
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ background: `radial-gradient(circle at 50% 50%, ${stat.color}08 0%, transparent 70%)` }}
-          />
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-2 rounded-xl" style={{ background: `${stat.color}15`, color: stat.color }}>
-              {stat.icon}
+    <div className="mb-6">
+      {/* Main Balance Card */}
+      <div
+        className="rounded-[20px] p-6 backdrop-blur-xl mb-4"
+        style={{ background: "rgba(8,12,30,0.7)", border: "1px solid rgba(0,200,255,0.15)" }}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <div className="text-[11px] text-white/40 font-medium mb-1 uppercase tracking-wider">Total Balance</div>
+            <div className="text-4xl font-black text-white mb-1">
+              ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#00C851] text-sm font-bold">+{dailyChange}%</span>
+              <span className="text-white/30 text-xs">vs yesterday</span>
             </div>
           </div>
-          <div className="text-[11px] text-white/40 font-medium mb-1">{stat.label}</div>
-          <div className="text-[22px] font-black mb-0.5" style={{ color: stat.color }}>{stat.value}</div>
-          <div className="text-[11px] text-white/30">{stat.sub}</div>
+
+          <div className="flex items-center gap-3">
+            {/* Currency Selector */}
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="px-3 py-2 rounded-xl text-sm bg-white/5 border border-white/10 text-white outline-none focus:border-[#00C8FF]/50"
+            >
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
+
+            {/* Account Selector */}
+            <select
+              value={selectedAccount}
+              onChange={(e) => setSelectedAccount(e.target.value)}
+              className="px-3 py-2 rounded-xl text-sm bg-white/5 border border-white/10 text-white outline-none focus:border-[#00C8FF]/50"
+            >
+              <option value="all">All Accounts</option>
+              <option value="checking">Checking (*4521)</option>
+              <option value="savings">Savings (*7893)</option>
+            </select>
+          </div>
         </div>
-      ))}
+
+        {/* Balance Breakdown */}
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+          <div>
+            <div className="text-[11px] text-white/40 mb-1">Available Balance</div>
+            <div className="text-xl font-bold text-[#00C851]">
+              ${availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </div>
+          </div>
+          <div>
+            <div className="text-[11px] text-white/40 mb-1">Pending Balance</div>
+            <div className="text-xl font-bold text-[#FFB800]">
+              ${pendingBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-[16px] p-5 backdrop-blur-xl relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-default"
+            style={{ background: "rgba(8,12,30,0.7)", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <div
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ background: `radial-gradient(circle at 50% 50%, ${stat.color}08 0%, transparent 70%)` }}
+            />
+            <div className="flex items-start justify-between mb-3">
+              <div className="p-2 rounded-xl" style={{ background: `${stat.color}15`, color: stat.color }}>
+                {stat.icon}
+              </div>
+            </div>
+            <div className="text-[11px] text-white/40 font-medium mb-1">{stat.label}</div>
+            <div className="text-[22px] font-black mb-0.5" style={{ color: stat.color }}>{stat.value}</div>
+            <div className="text-[11px] text-white/30">{stat.sub}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

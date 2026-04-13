@@ -13,6 +13,7 @@ import SpendingChart from "../components/SpendingChart";
 import AIInsightCard from "../components/AIInsightCard";
 import SpendingInsights from "../components/SpendingInsights";
 import ModuleHub from "../components/ModuleHub";
+import BankAccounts from "../components/BankAccounts";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -66,17 +67,19 @@ export default function DashboardPage() {
         <BalanceCard />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <RecentTransactions />
+          <div className="lg:col-span-2">
+            <RecentTransactions />
+          </div>
           <FraudRiskAlert />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <AIInsightCard />
-          <QuickActions />
+          <SpendingChart />
+          <BankAccounts />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SpendingChart />
+          <QuickActions />
           <SpendingInsights />
         </div>
 
