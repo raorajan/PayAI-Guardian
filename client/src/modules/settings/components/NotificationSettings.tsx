@@ -18,6 +18,9 @@ export default function NotificationSettings() {
     { id: "marketing", label: "Product Updates", desc: "New features and platform announcements.", email: false, push: false, sms: false },
   ]);
 
+  const [quietHours, setQuietHours] = useState({ start: "22:00", end: "08:00" });
+  const [digestFrequency, setDigestFrequency] = useState<"daily" | "weekly" | "monthly">("weekly");
+
   const toggle = (index: number, type: "email" | "push" | "sms") => {
     const newChannels = [...channels];
     newChannels[index][type] = !newChannels[index][type];
@@ -100,6 +103,92 @@ export default function NotificationSettings() {
         <button className="px-6 py-2.5 rounded-xl border border-[#521B54]/30 text-white font-bold text-[13px] hover:bg-[#521B54]/20 transition-all">
           Connect Channel
         </button>
+      </div>
+
+      {/* Quiet Hours & Digest Settings */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Quiet Hours */}
+        <div className="p-6 rounded-2xl bg-white/3 border border-white/5 space-y-6">
+          <h3 className="text-base font-bold text-white flex items-center gap-3">
+            <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+            Quiet Hours
+          </h3>
+          <p className="text-[13px] text-white/50">No notifications will be sent during this time except critical security alerts.</p>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-white/40 tracking-widest uppercase ml-1">Start Time</label>
+              <input
+                type="time"
+                value={quietHours.start}
+                onChange={(e) => setQuietHours({ ...quietHours, start: e.target.value })}
+                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#00C8FF]/50 outline-none transition-all text-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-white/40 tracking-widest uppercase ml-1">End Time</label>
+              <input
+                type="time"
+                value={quietHours.end}
+                onChange={(e) => setQuietHours({ ...quietHours, end: e.target.value })}
+                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#00C8FF]/50 outline-none transition-all text-white"
+              />
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-black/20 border border-white/5">
+            <p className="text-[12px] text-white/60">
+              <span className="font-bold text-white">Current:</span> Notifications muted from {quietHours.start} to {quietHours.end}
+            </p>
+          </div>
+        </div>
+
+        {/* Digest Frequency */}
+        <div className="p-6 rounded-2xl bg-white/3 border border-white/5 space-y-6">
+          <h3 className="text-base font-bold text-white flex items-center gap-3">
+            <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            Email Digest Frequency
+          </h3>
+          <p className="text-[13px] text-white/50">How often you want to receive summary emails of your account activity.</p>
+          
+          <div className="space-y-3">
+            {[
+              { value: "daily" as const, label: "Daily", desc: "Receive a summary every day at 8 AM" },
+              { value: "weekly" as const, label: "Weekly", desc: "Receive a summary every Monday" },
+              { value: "monthly" as const, label: "Monthly", desc: "Receive a summary on the 1st of each month" },
+            ].map((option) => (
+              <div
+                key={option.value}
+                onClick={() => setDigestFrequency(option.value)}
+                className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                  digestFrequency === option.value
+                    ? "border-[#00C8FF] bg-[#00C8FF]/5"
+                    : "border-white/5 bg-black/20 hover:bg-white/5"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      digestFrequency === option.value ? "border-[#00C8FF]" : "border-white/20"
+                    }`}
+                  >
+                    {digestFrequency === option.value && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#00C8FF]" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-white">{option.label}</div>
+                    <div className="text-[11px] text-white/40">{option.desc}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
     </div>

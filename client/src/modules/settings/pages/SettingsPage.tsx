@@ -7,8 +7,10 @@ import ProfileSettings from "../components/ProfileSettings";
 import SecuritySettings from "../components/SecuritySettings";
 import PreferencesSettings from "../components/PreferencesSettings";
 import NotificationSettings from "../components/NotificationSettings";
+import LinkedBanksSettings from "../components/LinkedBanksSettings";
+import PrivacyControlsSettings from "../components/PrivacyControlsSettings";
 
-type Category = "profile" | "security" | "preferences" | "notifications";
+type Category = "profile" | "security" | "preferences" | "notifications" | "linked-banks" | "privacy";
 
 const NAV_ITEMS: { id: Category; label: string; icon: string; description: string }[] = [
   { 
@@ -34,6 +36,18 @@ const NAV_ITEMS: { id: Category; label: string; icon: string; description: strin
     label: "Notifications", 
     icon: "🔔", 
     description: "Configure how and when you want to be alerted" 
+  },
+  { 
+    id: "linked-banks", 
+    label: "Linked Banks", 
+    icon: "🏦", 
+    description: "Manage your connected bank accounts" 
+  },
+  { 
+    id: "privacy", 
+    label: "Privacy Controls", 
+    icon: "🔒", 
+    description: "Data sharing and privacy preferences" 
   },
 ];
 
@@ -156,6 +170,8 @@ export default function SettingsPage() {
               {activeCategory === "security" && <SecuritySettings />}
               {activeCategory === "preferences" && <PreferencesSettings />}
               {activeCategory === "notifications" && <NotificationSettings />}
+              {activeCategory === "linked-banks" && <LinkedBanksSettings />}
+              {activeCategory === "privacy" && <PrivacyControlsSettings />}
             </div>
           </section>
 

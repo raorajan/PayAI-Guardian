@@ -15,6 +15,12 @@ export default function SecuritySettings() {
     confirmPassword: "",
   });
   const [changingPassword, setChangingPassword] = useState(false);
+  const [sessions, setSessions] = useState([
+    { device: "MacBook Pro 16", os: "macOS · San Jose, US", date: "Currently Active", icon: "💻", active: true },
+    { device: "iPhone 15 Pro", os: "iOS · San Jose, US", date: "2 hours ago", icon: "📱", active: false },
+    { device: "Brave Browser", os: "Windows · London, UK", date: "Apr 11, 2026", icon: "🌐", active: false },
+  ]);
+  const [showRevokeModal, setShowRevokeModal] = useState<string | null>(null);
 
   const handlePasswordChange = async () => {
     // Validation
@@ -64,6 +70,17 @@ export default function SecuritySettings() {
   };
 
   const currentLevel = getSensitivityLabel(aiSensitivity);
+
+  const handleRevokeSession = (device: string) => {
+    setSessions((prev) => prev.filter((s) => s.device !== device));
+    setShowRevokeModal(null);
+    toast.success(`Session revoked for ${device}`);
+  };
+
+  const handleRevokeAllSessions = () => {
+    setSessions((prev) => prev.filter((s) => s.active));
+    toast.success("All other sessions have been revoked");
+  };
 
   return (
     <div className="space-y-10">
@@ -223,12 +240,8 @@ export default function SecuritySettings() {
       <div className="p-6 rounded-2xl bg-white/3 border border-white/5">
         <h3 className="text-base font-bold text-white mb-6">Recent Logins</h3>
         <div className="space-y-4">
-          {[
-            { device: "MacBook Pro 16", os: "macOS · San Jose, US", date: "Currently Active", icon: "💻", active: true },
-            { device: "iPhone 15 Pro", os: "iOS · San Jose, US", date: "2 hours ago", icon: "📱", active: false },
-            { device: "Brave Browser", os: "Windows · London, UK", date: "Apr 11, 2026", icon: "🌐", active: false },
-          ].map((session, i) => (
-            <div key={i} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
+          {sessions.map((session, i) => (
+            <div key={i} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0 group">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-lg">
                   {session.icon}
@@ -243,14 +256,58 @@ export default function SecuritySettings() {
                   <div className="text-[11px] text-white/30">{session.os}</div>
                 </div>
               </div>
-              <div className="text-[12px] text-white/40 font-medium">{session.date}</div>
+              <div className="flex items-center gap-4">
+                <div className="text-[12px] text-white/40 font-medium">{session.date}</div>
+                {!session.active && (
+                  <button
+                    onClick={() => setShowRevokeModal(session.device)}
+                    className="opacity-0 group-hover:opacity-100 text-[11px] font-bold text-red-400 hover:text-red-300 transition-all px-3 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20"
+                  >
+                    Revoke
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
-        <button className="mt-6 text-[12px] font-semibold text-[#00C8FF] hover:underline">
+        <button 
+          onClick={handleRevokeAllSessions}
+          className="mt-6 text-[12px] font-semibold text-[#00C8FF] hover:underline"
+        >
           Sign out of all other sessions
         </button>
       </div>
+
+      {/* Revoke Session Modal */}
+      {showRevokeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md p-6 rounded-2xl bg-[#0A0F1E] border border-white/10 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center text-3xl">
+                🚫
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Revoke Access?</h3>
+              <p className="text-sm text-white/50">
+                This will sign out <span className="font-bold text-white">{showRevokeModal}</span>. The user will need to log in again to access their account.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowRevokeModal(null)}
+                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-sm hover:bg-white/10 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleRevokeSession(showRevokeModal)}
+                className="flex-1 px-4 py-3 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-all"
+              >
+                Revoke Access
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

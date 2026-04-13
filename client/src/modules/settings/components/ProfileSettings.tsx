@@ -22,6 +22,8 @@ export default function ProfileSettings() {
   const [saving, setSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -115,6 +117,17 @@ export default function ProfileSettings() {
     setAvatarPreview(null);
     setAvatarFile(null);
     toast.info("Changes cancelled");
+  };
+
+  const handleDeleteAccount = () => {
+    if (deleteConfirmText === "DELETE") {
+      toast.error("Account deletion initiated. You will receive a confirmation email.");
+      setShowDeleteModal(false);
+      setDeleteConfirmText("");
+      // Here you would call the actual delete account API
+    } else {
+      toast.error("Please type DELETE to confirm");
+    }
   };
 
   return (
@@ -267,6 +280,75 @@ export default function ProfileSettings() {
           </div>
         </div>
       </div>
+
+      {/* Delete Account Section */}
+      <div className="p-6 rounded-2xl bg-red-500/5 border border-red-500/20">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 flex-shrink-0">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-base font-bold text-red-100 mb-2">Delete Account</h3>
+            <p className="text-[13px] text-red-200/50 leading-relaxed mb-4">
+              Once you delete your account, all your data including AI training data, linked bank accounts, and transaction history will be permanently wiped. This action is irreversible.
+            </p>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="px-6 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-bold hover:bg-red-500/20 transition-all"
+            >
+              Delete My Account
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md p-6 rounded-2xl bg-[#0A0F1E] border border-red-500/20 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center text-3xl">
+                ⚠️
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Delete Your Account?</h3>
+              <p className="text-sm text-white/50 mb-4">
+                This action is permanent and cannot be undone. All your data will be lost forever.
+              </p>
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-white/40 tracking-widest uppercase">
+                  Type DELETE to confirm
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="w-full bg-white/5 border border-red-500/30 rounded-xl px-4 py-3 text-sm text-white focus:border-red-500/50 focus:outline-none transition-all text-center font-mono"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText("");
+                }}
+                className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-sm hover:bg-white/10 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="flex-1 px-4 py-3 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-all"
+              >
+                Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
