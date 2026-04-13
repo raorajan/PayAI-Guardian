@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 
 interface ChatMessage {
   role: "user" | "ai";
@@ -62,6 +63,16 @@ export default function AIInsightCard() {
           <div className="text-sm font-bold text-white">AI Banking Assistant</div>
           <div className="text-[10px] text-[#8040FF]">● Online — 2s avg response</div>
         </div>
+
+        <Link
+          href="/ai-assistant"
+          className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#8040FF]/10 border border-[#8040FF]/20 text-[10px] font-black text-[#8040FF] uppercase tracking-widest hover:bg-[#8040FF]/20 transition-all no-underline group"
+        >
+          <span>Command Center</span>
+          <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+          </svg>
+        </Link>
       </div>
 
       {/* Messages */}
