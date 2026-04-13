@@ -18,50 +18,25 @@ export default function VerifyEmailPage() {
   // Get token from URL
   const token = searchParams.get('token');
 
-  // Handle verification when component mounts
   useEffect(() => {
     dispatch(clearAuthState());
 
-    // Check if token exists
     if (!token) {
       setVerificationStatus('error');
       toast.error('Invalid or missing verification token. Please request a new verification link.');
       return;
     }
 
-    // Verify email automatically
     const verifyUserEmail = async () => {
       try {
         const result = await dispatch(verifyEmail(token)).unwrap();
-        
-        // Success response structure:
-        // {
-        //   status: 'success',
-        //   statusCode: 200,
-        //   success: true,
-        //   message: 'Email verified successfully. You can now log in.',
-        //   data: {
-        //     user: { id, email, fullName, isVerified }
-        //   }
-        // }
-        
         setVerificationStatus('success');
         setUserInfo(result?.data?.user || null);
         toast.success(result?.message || 'Email verified and logged in successfully!');
-        
-        // Redirect to dashboard after 2 seconds (auto-login enabled)
         setTimeout(() => {
-          router.push('/');
+          router.push('/auth/signin');
         }, 2000);
       } catch (err: any) {
-        // Error response structure:
-        // {
-        //   status: 'error',
-        //   statusCode: 400,
-        //   success: false,
-        //   message: 'Error message here'
-        // }
-        
         setVerificationStatus('error');
         const errorMsg = err?.message || 'Email verification failed. Please try again.';
         toast.error(errorMsg);
