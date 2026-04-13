@@ -1,9 +1,61 @@
 "use client";
 import React, { useState } from "react";
+import { useAppDispatch } from "@/redux/store";
+import { useToast } from "@/hooks/useToast";
+import { changePassword } from "@/modules/auth/slice/authSlice";
 
 export default function SecuritySettings() {
+  const dispatch = useAppDispatch();
+  const toast = useToast();
   const [aiSensitivity, setAiSensitivity] = useState(65); // 0-100
   const [useTwoFactor, setUseTwoFactor] = useState(true);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handlePasswordChange = async () => {
+    // Validation
+    if (!passwordData.currentPassword) {
+      toast.error("Current password is required");
+      return;
+    }
+
+    if (!passwordData.newPassword || passwordData.newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters");
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setChangingPassword(true);
+
+    try {
+      await dispatch(
+        changePassword({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        })
+      ).unwrap();
+
+      toast.success("Password changed successfully!");
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error: any) {
+      const errorMsg = error?.message || "Failed to change password";
+      toast.error(errorMsg);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   const getSensitivityLabel = (val: number) => {
     if (val < 33) return { label: "Conservative", color: "#00C851", text: "Low blocking, more alerts." };
@@ -105,20 +157,49 @@ export default function SecuritySettings() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-[11px] font-bold text-white/40 tracking-widest uppercase">Current Password</label>
-                <input type="password" placeholder="••••••••" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#00C8FF]/50 outline-none transition-all" />
+                <input 
+                  type="password" 
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  placeholder="••••••••" 
+                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#00C8FF]/50 outline-none transition-all" 
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-[11px] font-bold text-white/40 tracking-widest uppercase">New Password</label>
-                <input type="password" placeholder="••••••••" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#00C8FF]/50 outline-none transition-all" />
+                <input 
+                  type="password" 
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  placeholder="••••••••" 
+                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#00C8FF]/50 outline-none transition-all" 
+                />
               </div>
               <div className="space-y-2">
                 <label className="text-[11px] font-bold text-white/40 tracking-widest uppercase">Confirm New Password</label>
-                <input type="password" placeholder="••••••••" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#00C8FF]/50 outline-none transition-all" />
+                <input 
+                  type="password" 
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                  placeholder="••••••••" 
+                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#00C8FF]/50 outline-none transition-all" 
+                />
               </div>
             </div>
 
-            <button className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-bold hover:bg-white/10 transition-all">
-              Update Security Credentials
+            <button 
+              onClick={handlePasswordChange}
+              disabled={changingPassword}
+              className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-bold hover:bg-white/10 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {changingPassword ? (
+                <>
+                  <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Security Credentials"
+              )}
             </button>
           </div>
 

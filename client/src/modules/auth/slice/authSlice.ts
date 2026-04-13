@@ -149,6 +149,48 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+export const updateProfile = createAsyncThunk(
+  "auth/updateProfile",
+  async (data: any, { rejectWithValue }) => {
+    try {
+      const response: any = await authAction.updateProfile(data);
+      return response.data || response;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || error?.response?.data || { message: "Failed to update profile" }
+      );
+    }
+  }
+);
+
+export const uploadAvatar = createAsyncThunk(
+  "auth/uploadAvatar",
+  async (formData: FormData, { rejectWithValue }) => {
+    try {
+      const response: any = await authAction.uploadAvatar(formData);
+      return response.data || response;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || error?.response?.data || { message: "Failed to upload avatar" }
+      );
+    }
+  }
+);
+
+export const changePassword = createAsyncThunk(
+  "auth/changePassword",
+  async (data: any, { rejectWithValue }) => {
+    try {
+      const response: any = await authAction.changePassword(data);
+      return response.data || response;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || error?.response?.data || { message: "Failed to change password" }
+      );
+    }
+  }
+);
+
 const auth = createSlice({
   name: "auth",
   initialState,
@@ -273,6 +315,53 @@ const auth = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         removeToken();
+      })
+
+      // Update Profile
+      .addCase(updateProfile.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        const payload = action.payload;
+        if (payload?.data?.user) {
+          state.user = payload.data.user;
+        }
+        state.message = payload?.message || "Profile updated successfully";
+      })
+      .addCase(updateProfile.rejected, (state, action: any) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to update profile";
+      })
+
+      // Upload Avatar
+      .addCase(uploadAvatar.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(uploadAvatar.fulfilled, (state, action) => {
+        state.loading = false;
+        const payload = action.payload;
+        if (payload?.data?.user) {
+          state.user = payload.data.user;
+        }
+        state.message = payload?.message || "Avatar uploaded successfully";
+      })
+      .addCase(uploadAvatar.rejected, (state, action: any) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to upload avatar";
+      })
+
+      // Change Password
+      .addCase(changePassword.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(changePassword.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload?.message || "Password changed successfully";
+      })
+      .addCase(changePassword.rejected, (state, action: any) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to change password";
       });
   },
 });

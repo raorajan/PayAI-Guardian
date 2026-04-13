@@ -39,3 +39,23 @@ export const logoutUser = async () => {
   const url = `api/v1/logout`;
   return await fetchFromApiServer("POST", url, null, {}, null);
 };
+
+export const updateProfile = async (data: any) => {
+  const url = `api/v1/auth/profile`;
+  return await fetchFromApiServer("PUT", url, data, {}, null);
+};
+
+export const uploadAvatar = async (formData: FormData) => {
+  const url = `api/v1/auth/avatar`;
+  return await fetchFromApiServer("MULTIPART", url, formData, {}, null);
+};
+
+export const changePassword = async (data: any) => {
+  const url = `api/v1/auth/change-password`;
+  return await fetchFromApiServer("POST", url, data, {}, null);
+};
+
+export const updateNotificationPreferences = async (data: any) => {
+  const url = `api/v1/auth/notifications`;
+  return await fetchFromApiServer("PUT", url, data, {}, null);
+};
