@@ -132,6 +132,23 @@ export const getProfile = createAsyncThunk(
   }
 );
 
+export const logoutUser = createAsyncThunk(
+  "auth/logout",
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      await authAction.logoutUser();
+      dispatch(logout());
+      return true;
+    } catch (error: any) {
+      // Even if API fails, we still want to clear local session
+      dispatch(logout());
+      return rejectWithValue(
+        error?.response?.data?.message || error?.response?.data || { message: "Logout failed" }
+      );
+    }
+  }
+);
+
 const auth = createSlice({
   name: "auth",
   initialState,

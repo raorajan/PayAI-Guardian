@@ -34,3 +34,8 @@ export const getMe = async () => {
   const url = `api/v1/auth/me`;
   return await fetchFromApiServer("GET", url, null, {}, null);
 };
+
+export const logoutUser = async () => {
+  const url = `api/v1/logout`;
+  return await fetchFromApiServer("POST", url, null, {}, null);
+};

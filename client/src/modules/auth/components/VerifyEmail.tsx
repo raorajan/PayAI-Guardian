@@ -15,7 +15,6 @@ export default function VerifyEmailPage() {
   const [verificationStatus, setVerificationStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [userInfo, setUserInfo] = useState<any>(null);
 
-  // Get token from URL
   const token = searchParams.get('token');
 
   useEffect(() => {

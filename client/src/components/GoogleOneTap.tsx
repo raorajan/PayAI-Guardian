@@ -31,7 +31,8 @@ export default function GoogleOneTap() {
         callback: handleCredentialResponse,
         auto_select: false, // Don't auto-select if multiple accounts
         cancel_on_tap_outside: false,
-        use_fedcm_for_prompt: false, // Revert to old flow to avoid FedCM localhost issues
+        use_fedcm_for_prompt: true, // Use modern FedCM flow
+        itp_support: true, // Enable ITP support for better browser compatibility
       });
 
       // Show the prompt

@@ -128,9 +128,16 @@ body {
   50%       { opacity: 1;    }
 }
 
+
 @keyframes orb-float {
   0%, 100% { transform: translateY(0);     }
   50%       { transform: translateY(-10px); }
+}
+
+/* Alias used by Tailwind arbitrary: animate-[float_5s_...] */
+@keyframes float {
+  0%, 100% { transform: translateY(0);     }
+  50%       { transform: translateY(-18px); }
 }
 
 /* ── Animation Utility Classes ───────────────────────────── */
