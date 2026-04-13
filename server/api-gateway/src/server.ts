@@ -89,7 +89,8 @@ const combinedDocs = {
   openapi: '3.0.0',
   info: gatewayDocs.info,
   servers: [
-    ...(gatewayDocs.servers || []),
+    { url: `http://localhost:${PORT}`, description: 'Local Development' },
+    { url: 'https://api.payaiguardian.raorajan.pro', description: 'Production' }
   ],
   tags: [
     ...(gatewayDocs.tags || []),
