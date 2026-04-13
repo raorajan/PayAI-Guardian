@@ -110,6 +110,7 @@ body {
   background-color: var(--color-guardian-base);
   color: var(--color-text-primary);
   font-family: var(--font-primary);
+  overflow-x: hidden;
 }
 
 /* ── Keyframe Animations ─────────────────────────────────── */
