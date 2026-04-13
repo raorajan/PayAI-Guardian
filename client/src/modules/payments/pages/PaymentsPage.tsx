@@ -10,8 +10,10 @@ import RecipientSearch   from "../components/RecipientSearch";
 import PlaidLinkButton   from "../components/PlaidLinkButton";
 import PaymentConfirmation from "../components/PaymentConfirmation";
 import SplitPaymentModal from "../components/SplitPaymentModal";
+import RequestMoney      from "../components/RequestMoney";
+import PaymentStatusTracker from "../components/PaymentStatusTracker";
 
-type Tab = "send" | "history" | "accounts";
+type Tab = "send" | "request" | "history" | "accounts";
 
 const STATS = [
   { label: "Available Balance", value: "$19,171.74", sub: "across 3 accounts",  color: "#00C8FF",  icon: (
@@ -40,6 +42,10 @@ const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   {
     key: "send", label: "Send Money",
     icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>,
+  },
+  {
+    key: "request", label: "Request",
+    icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>,
   },
   {
     key: "history", label: "History",
@@ -176,16 +182,26 @@ export default function PaymentsPage() {
 
         {/* --- SEND TAB --- */}
         {tab === "send" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <PaymentForm />
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <PaymentForm />
+              </div>
+              <div className="lg:col-span-1">
+                <RecipientSearch />
+              </div>
+              <div className="lg:col-span-1">
+                <PlaidLinkButton />
+              </div>
             </div>
-            <div className="lg:col-span-1">
-              <RecipientSearch />
-            </div>
-            <div className="lg:col-span-1">
-              <PlaidLinkButton />
-            </div>
+            <PaymentStatusTracker />
+          </div>
+        )}
+
+        {/* --- REQUEST TAB --- */}
+        {tab === "request" && (
+          <div className="grid grid-cols-1 gap-6">
+            <RequestMoney />
           </div>
         )}
 

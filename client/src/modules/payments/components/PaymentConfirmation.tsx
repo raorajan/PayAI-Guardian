@@ -9,6 +9,8 @@ interface ConfirmationProps {
   transactionId?: string;
   timestamp?: string;
   status?: "success" | "pending" | "failed";
+  blockchainHash?: string;
+  blockchainExplorerUrl?: string;
   onDone?: () => void;
 }
 
@@ -20,6 +22,8 @@ export default function PaymentConfirmation({
   transactionId = "TXN-7F4A2B9E",
   timestamp = "Apr 13, 2026 · 10:32 AM",
   status = "success",
+  blockchainHash = "0x3f4a8b2c9d1e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
+  blockchainExplorerUrl = "https://etherscan.io/tx/0x3f4a8b2c9d1e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
   onDone,
 }: ConfirmationProps) {
   const statusConfig = {
@@ -97,6 +101,7 @@ export default function PaymentConfirmation({
             value: `${riskScore}/100`,
             valueColor: riskScore < 30 ? "#00C851" : riskScore < 70 ? "#FFA500" : "#FF3B5C",
           },
+          { label: "Blockchain Hash", value: blockchainHash.substring(0, 20) + "...", mono: true, link: true },
         ].map((row, i, arr) => (
           <div
             key={row.label}
@@ -111,7 +116,22 @@ export default function PaymentConfirmation({
               className={`text-[12px] font-semibold ${row.mono ? "font-mono" : ""}`}
               style={{ color: row.valueColor ?? "rgba(255,255,255,0.75)" }}
             >
-              {row.value}
+              {row.link ? (
+                <a
+                  href={blockchainExplorerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-[#00C8FF] transition-colors flex items-center gap-1"
+                  style={{ color: "#00C8FF" }}
+                >
+                  {row.value}
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              ) : (
+                row.value
+              )}
             </span>
           </div>
         ))}

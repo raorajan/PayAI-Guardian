@@ -3,6 +3,7 @@ import React, { useState } from "react";
 
 type Status = "approved" | "blocked" | "received" | "pending";
 type Filter = "all" | Status;
+type DateRange = "all" | "today" | "week" | "month" | "custom";
 
 interface Transaction {
   id: string;
@@ -58,6 +59,8 @@ const STATUS_CONFIG: Record<Status, { color: string; bg: string; label: string }
 export default function PaymentHistory() {
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange>("all");
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const filtered = TRANSACTIONS.filter((tx) => {
     const matchFilter = filter === "all" || tx.status === filter;
@@ -90,9 +93,34 @@ export default function PaymentHistory() {
           <span className="text-[11px] text-[#FF3B5C] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(255,59,92,0.1)", border: "1px solid rgba(255,59,92,0.2)" }}>
             {totalBlocked} blocked
           </span>
-          <span className="text-[11px] text-[#00C8FF] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(0,200,255,0.08)", border: "1px solid rgba(0,200,255,0.15)" }}>
-            Live
-          </span>
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
+              style={{ background: "rgba(0,200,255,0.08)", border: "1px solid rgba(0,200,255,0.2)", color: "#00C8FF" }}
+            >
+              📥 Export
+            </button>
+            {showExportMenu && (
+              <div
+                className="absolute right-0 top-full mt-2 p-2 rounded-xl z-10 min-w-[150px]"
+                style={{ background: "rgba(8,12,30,0.95)", border: "1px solid rgba(0,200,255,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
+              >
+                <button
+                  onClick={() => { console.log("Export CSV"); setShowExportMenu(false); }}
+                  className="w-full px-3 py-2 rounded-lg text-left text-[12px] text-white/70 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  📄 Export as CSV
+                </button>
+                <button
+                  onClick={() => { console.log("Export PDF"); setShowExportMenu(false); }}
+                  className="w-full px-3 py-2 rounded-lg text-left text-[12px] text-white/70 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  📑 Export as PDF
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -114,20 +142,33 @@ export default function PaymentHistory() {
         ))}
       </div>
 
-      {/* Search */}
-      <div
-        className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-      >
-        <svg className="w-4 h-4 text-white/30 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search transactions..."
-          className="flex-1 bg-transparent text-[13px] text-white/80 outline-none placeholder:text-white/25"
-        />
+      {/* Search & Date Range */}
+      <div className="flex gap-3 mb-4">
+        <div
+          className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <svg className="w-4 h-4 text-white/30 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search transactions..."
+            className="flex-1 bg-transparent text-[13px] text-white/80 outline-none placeholder:text-white/25"
+          />
+        </div>
+        <select
+          value={dateRange}
+          onChange={(e) => setDateRange(e.target.value as DateRange)}
+          className="px-3 py-2.5 rounded-xl text-[12px] font-semibold bg-white/5 border border-white/10 text-white/70 outline-none focus:border-[#00C8FF]/50 cursor-pointer"
+        >
+          <option value="all">All Time</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="custom">Custom Range</option>
+        </select>
       </div>
 
       {/* Filters */}

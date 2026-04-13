@@ -157,9 +157,27 @@ export default function SplitPaymentModal({ isOpen, onClose }: Props) {
                     {p.name}
                     {p.paid && <span className="ml-2 text-[10px] text-[#00C851]">· Paid</span>}
                   </span>
-                  <span className="text-[14px] font-bold text-[#00C8FF]">
-                    ${splitType === "equal" ? perPerson.toFixed(2) : p.amount.toFixed(2)}
-                  </span>
+                  {splitType === "custom" ? (
+                    <div className="flex items-center gap-1">
+                      <span className="text-white/40 text-sm font-bold">$</span>
+                      <input
+                        type="number"
+                        value={p.amount || ""}
+                        onChange={(e) => {
+                          const newAmount = parseFloat(e.target.value) || 0;
+                          const newParticipants = [...participants];
+                          newParticipants[i].amount = newAmount;
+                          setParticipants(newParticipants);
+                        }}
+                        placeholder="0.00"
+                        className="w-20 px-2 py-1 rounded-lg text-[13px] font-bold text-[#00C8FF] bg-transparent border border-white/10 outline-none focus:border-[#00C8FF]/50 text-right"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-[14px] font-bold text-[#00C8FF]">
+                      ${perPerson.toFixed(2)}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -169,9 +187,13 @@ export default function SplitPaymentModal({ isOpen, onClose }: Props) {
               className="p-3 rounded-xl flex items-center justify-between mb-5"
               style={{ background: "rgba(0,200,255,0.04)", border: "1px solid rgba(0,200,255,0.12)" }}
             >
-              <span className="text-[12px] text-white/40">Each person owes</span>
+              <span className="text-[12px] text-white/40">
+                {splitType === "equal" ? "Each person owes" : "Total split amount"}
+              </span>
               <span className="text-[16px] font-black text-[#00C8FF]">
-                ${splitType === "equal" ? perPerson.toFixed(2) : "Custom"}
+                {splitType === "equal"
+                  ? `$${perPerson.toFixed(2)}`
+                  : `$${participants.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}`}
               </span>
             </div>
 
