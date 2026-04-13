@@ -12,6 +12,7 @@ import QuickActions from "../components/QuickActions";
 import SpendingChart from "../components/SpendingChart";
 import AIInsightCard from "../components/AIInsightCard";
 import SpendingInsights from "../components/SpendingInsights";
+import ModuleHub from "../components/ModuleHub";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -59,6 +60,8 @@ export default function DashboardPage() {
       <main className="relative z-10 max-w-[1280px] mx-auto px-6 pb-20">
 
         <WelcomeBanner />
+        
+        <ModuleHub />
 
         <BalanceCard />
 

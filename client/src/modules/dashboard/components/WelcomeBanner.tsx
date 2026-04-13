@@ -1,9 +1,14 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAppSelector } from "@/redux/store";
 
 export default function WelcomeBanner() {
+  const [mounted, setMounted] = useState(false);
   const { user } = useAppSelector((s) => s.auth);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div
@@ -19,7 +24,7 @@ export default function WelcomeBanner() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-white mb-1">
-            Welcome back, {user?.fullName?.split(" ")[0] ?? "Guardian"} 👋
+            Welcome back, {mounted ? (user?.fullName?.split(" ")[0] ?? "Guardian") : "Guardian"} 👋
           </h1>
           <p className="text-white/50 text-sm">Your AI banking dashboard — every transaction monitored, every threat blocked.</p>
           <div className="flex flex-wrap gap-3 mt-4">

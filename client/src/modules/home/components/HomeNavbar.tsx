@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useAppSelector } from "@/redux/store";
 
 export default function HomeNavbar() {
+  const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAuthenticated, user } = useAppSelector((s) => s.auth);
 
   useEffect(() => {
+    setMounted(true);
     const onScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
@@ -65,7 +67,7 @@ export default function HomeNavbar() {
             </a>
           ))}
 
-          {isAuthenticated ? (
+          {mounted && isAuthenticated ? (
             <Link
               href="/dashboard"
               className="ml-2 flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-gradient-to-r from-[#0A66C2] to-[#00C8FF] text-white text-[14px] font-semibold no-underline shadow-[0_4px_16px_rgba(0,150,255,0.4)] transition-all duration-200"
@@ -121,7 +123,7 @@ export default function HomeNavbar() {
               {link.label}
             </a>
           ))}
-          {isAuthenticated ? (
+          {mounted && isAuthenticated ? (
             <Link
               href="/dashboard"
               className="mt-2 px-4 py-3.5 rounded-[10px] bg-gradient-to-r from-[#0A66C2] to-[#00C8FF] text-white text-[15px] font-semibold no-underline text-center block"
