@@ -1,12 +1,15 @@
 "use client";
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/store";
 import { logoutUser } from "@/modules/auth/slice/authSlice";
 
 export default function DashboardHeader() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((s) => s.auth);
+  const pathname = usePathname();
+  const isPaymentsPage = pathname === "/payments";
 
   return (
     <header 
@@ -36,25 +39,33 @@ export default function DashboardHeader() {
               </span>
             </div>
           )}
-          <Link
-            href="/"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/70 text-sm font-medium hover:bg-white/10 hover:text-white transition-all no-underline"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            Home
-          </Link>
-          <Link
-            href="/payments"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all no-underline"
-            style={{ background: "rgba(0,200,255,0.08)", border: "1px solid rgba(0,200,255,0.2)", color: "#00C8FF" }}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-            Payments
-          </Link>
+          {isPaymentsPage ? (
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all no-underline"
+              style={{ background: "rgba(128,64,255,0.08)", border: "1px solid rgba(128,64,255,0.2)", color: "#8040FF" }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+                <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
+              </svg>
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/payments"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all no-underline"
+              style={{ background: "rgba(0,200,255,0.08)", border: "1px solid rgba(0,200,255,0.2)", color: "#00C8FF" }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              Payments
+            </Link>
+          )}
+
           <button
             onClick={() => dispatch(logoutUser())}
             className="flex items-center justify-center p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all shadow-[0_0_10px_rgba(255,59,92,0.1)] hover:shadow-[0_0_15px_rgba(255,59,92,0.2)] group"
