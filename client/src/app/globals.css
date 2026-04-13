@@ -146,6 +146,33 @@ body {
 .anim-pulse-glow  { animation: pulse-glow   3s ease-in-out infinite; }
 .anim-float       { animation: orb-float    4s ease-in-out infinite; }
 
-/* ── Hide scrollbars globally (optional, remove if unwanted) */
+/* ── Hide scrollbars globally (utility) ──────────────────── */
 .scrollbar-hidden::-webkit-scrollbar { display: none; }
 .scrollbar-hidden { scrollbar-width: none; }
+
+/* ── Global Custom Thin Scrollbar ────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-guardian-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-cyan);
+  box-shadow: 0 0 10px var(--color-accent-glow);
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}

@@ -1,5 +1,5 @@
-import React from 'react';
+import PaymentsPage from "@/modules/payments/pages/PaymentsPage";
 
-export default function paymentsPage() {
-  return <div className="p-6">payments Module Page</div>;
+export default function PaymentsRoute() {
+  return <PaymentsPage />;
 }

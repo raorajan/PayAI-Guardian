@@ -25,9 +25,16 @@ export default function HomeNavbar() {
     <nav
       className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
         scrolled
-          ? "bg-[#050810]/85 backdrop-blur-xl border-b border-[#00C8FF]/10"
-          : "bg-transparent"
+          ? "border-b border-[#00C8FF]/15"
+          : "border-b border-transparent"
       }`}
+      style={{
+        background: scrolled
+          ? "rgba(5,8,16,0.97)"
+          : "rgba(5,8,16,1)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+      }}
     >
       <div className="max-w-[1280px] mx-auto px-6 h-[72px] flex items-center justify-between">
         {/* Logo */}
@@ -103,7 +110,7 @@ export default function HomeNavbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-[#050810]/95 border-t border-[#00C8FF]/10 backdrop-blur-xl px-6 pb-6 pt-4 flex flex-col gap-1">
+        <div className="md:hidden border-t border-[#00C8FF]/10 px-6 pb-6 pt-4 flex flex-col gap-1" style={{ background: "rgba(5,8,16,1)", backdropFilter: "blur(24px)" }}>
           {navLinks.map((link) => (
             <a
               key={link.label}
