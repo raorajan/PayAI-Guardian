@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as authAction from "./authAction";
 // @ts-ignore
-import { removeToken, setToken } from "../../../services/utils";
+import { getToken, removeToken, setToken } from "../../../services/utils";
 
 // Initial state
 interface AuthState {
@@ -14,7 +14,7 @@ interface AuthState {
 
 const initialState: AuthState = {
   user: null,
-  isAuthenticated: false,
+  isAuthenticated: !!getToken(),
   loading: false,
   error: null,
   message: null,

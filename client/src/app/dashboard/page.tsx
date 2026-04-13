@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import DashboardPage from "@/modules/dashboard/pages/DashboardPage";
+import DashboardClient from "@/modules/dashboard/components/DashboardClient";
 
 export const metadata: Metadata = {
   title: "Dashboard | PayAI Guardian",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <DashboardPage />;
+  return <DashboardClient />;
 }

@@ -59,26 +59,22 @@ export default function HomeNavbar() {
           ))}
 
           {isAuthenticated ? (
-            // Authenticated: show "Go to Dashboard" button
             <Link
               href="/dashboard"
-              id="nav-dashboard-btn"
-              className="ml-2 flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-gradient-to-r from-[#0A66C2] to-[#00C8FF] text-white text-sm font-semibold no-underline shadow-[0_4px_16px_rgba(0,150,255,0.4)] hover:-translate-y-px hover:shadow-[0_6px_24px_rgba(0,150,255,0.6)] transition-all duration-200"
+              className="ml-2 flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-gradient-to-r from-[#0A66C2] to-[#00C8FF] text-white text-[14px] font-semibold no-underline shadow-[0_4px_16px_rgba(0,150,255,0.4)] transition-all duration-200"
             >
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
                 <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
                 <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
                 <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
                 <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="2"/>
               </svg>
-              {user?.fullName ? `Dashboard` : "Dashboard"}
+              Dashboard
             </Link>
           ) : (
-            // Not authenticated: show "Launch App"
             <Link
               href="/auth"
-              id="nav-launch-btn"
-              className="ml-2 px-5 py-2.5 rounded-[10px] bg-gradient-to-r from-[#0A66C2] to-[#00C8FF] text-white text-sm font-semibold no-underline shadow-[0_4px_16px_rgba(0,150,255,0.4)] hover:-translate-y-px hover:shadow-[0_6px_24px_rgba(0,150,255,0.6)] transition-all duration-200"
+              className="ml-2 px-5 py-2.5 rounded-[10px] bg-gradient-to-r from-[#0A66C2] to-[#00C8FF] text-white text-[14px] font-semibold no-underline shadow-[0_4px_16px_rgba(0,150,255,0.4)] transition-all duration-200"
             >
               Launch App
             </Link>
@@ -123,7 +119,7 @@ export default function HomeNavbar() {
               href="/dashboard"
               className="mt-2 px-4 py-3.5 rounded-[10px] bg-gradient-to-r from-[#0A66C2] to-[#00C8FF] text-white text-[15px] font-semibold no-underline text-center block"
             >
-              Go to Dashboard
+              Dashboard
             </Link>
           ) : (
             <Link

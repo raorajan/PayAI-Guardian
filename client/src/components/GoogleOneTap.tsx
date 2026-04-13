@@ -29,16 +29,21 @@ export default function GoogleOneTap() {
       window.google.accounts.id.initialize({
         client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse,
-        auto_select: false, // Don't auto-select if multiple accounts
-        cancel_on_tap_outside: false,
-        use_fedcm_for_prompt: true, // Use modern FedCM flow
-        itp_support: true, // Enable ITP support for better browser compatibility
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        use_fedcm_for_prompt: true,
+        itp_support: true,
+        context: "signin",
       });
 
       // Show the prompt
       window.google.accounts.id.prompt((notification: any) => {
         if (notification.isNotDisplayed()) {
-          console.log("One Tap not displayed:", notification.getNotDisplayedReason());
+          console.warn("One Tap not displayed selection:", notification.getNotDisplayedReason());
+        } else if (notification.isSkippedMoment()) {
+          console.warn("One Tap skipped:", notification.getSkippedReason());
+        } else if (notification.isDismissedMoment()) {
+          console.warn("One Tap dismissed:", notification.getDismissedReason());
         }
       });
     };
@@ -59,7 +64,7 @@ export default function GoogleOneTap() {
           setToken(data.data.token);
           await dispatch(getProfile()).unwrap();
           toast.success("Login successful!");
-          router.refresh();
+          router.push("/dashboard");
         } else {
           toast.error(data.message || "Google One Tap login failed");
         }

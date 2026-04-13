@@ -15,20 +15,13 @@ import SpendingInsights from "../components/SpendingInsights";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const { isAuthenticated, loading } = useAppSelector((s) => s.auth);
-
-  useEffect(() => {
-    dispatch(getProfile());
-  }, [dispatch]);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.replace("/auth");
     }
   }, [isAuthenticated, loading, router]);
-
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-[#050810] flex items-center justify-center">
@@ -40,7 +33,6 @@ export default function DashboardPage() {
     );
   }
 
-  // Auth guard — redirect handled by effect above
   if (!isAuthenticated) return null;
 
   return (
@@ -48,7 +40,6 @@ export default function DashboardPage() {
       className="min-h-screen w-full relative overflow-x-hidden"
       style={{ fontFamily: "Inter, -apple-system, sans-serif", background: "#050810" }}
     >
-      {/* ── Background decorations ── */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[60%] rounded-full bg-[radial-gradient(circle,rgba(20,70,190,0.25)_0%,transparent_70%)] blur-[80px]" />
         <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] rounded-full bg-[radial-gradient(circle,rgba(100,40,200,0.18)_0%,transparent_70%)] blur-[70px]" />
@@ -63,31 +54,24 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* ── Header ── */}
       <DashboardHeader />
 
-      {/* ── Main Content ── */}
       <main className="relative z-10 max-w-[1280px] mx-auto px-6 pb-20">
 
-        {/* Welcome Banner */}
         <WelcomeBanner />
 
-        {/* Stats Row */}
         <BalanceCard />
 
-        {/* Row 1: Transactions + Security Status */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <RecentTransactions />
           <FraudRiskAlert />
         </div>
 
-        {/* Row 2: AI Chat + Fraud Simulator */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <AIInsightCard />
           <QuickActions />
         </div>
 
-        {/* Row 3: Blockchain Audit + Spending Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SpendingChart />
           <SpendingInsights />

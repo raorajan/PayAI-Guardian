@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAppSelector } from "@/redux/store";
 
@@ -72,7 +72,6 @@ export default function HeroSection() {
           {isAuthenticated ? (
             <Link
               href="/dashboard"
-              id="hero-dashboard-btn"
               className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-[#0A66C2] to-[#00C8FF] text-white text-base font-bold no-underline shadow-[0_6px_24px_rgba(0,150,255,0.4)] hover:-translate-y-0.5 hover:shadow-[0_10px_36px_rgba(0,150,255,0.6)] transition-all duration-300 sm:w-auto w-full"
             >
               <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
@@ -86,7 +85,6 @@ export default function HeroSection() {
           ) : (
             <Link
               href="/auth"
-              id="hero-launch-demo-btn"
               className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-[#0A66C2] to-[#00C8FF] text-white text-base font-bold no-underline shadow-[0_6px_24px_rgba(0,150,255,0.4)] hover:-translate-y-0.5 hover:shadow-[0_10px_36px_rgba(0,150,255,0.6)] transition-all duration-300 sm:w-auto w-full"
             >
               <svg width="18" height="18" fill="none" viewBox="0 0 24 24">

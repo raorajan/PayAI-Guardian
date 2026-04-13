@@ -32,8 +32,8 @@ export default function LoginForm({ setView }: LoginFormProps) {
     if (token) {
       setToken(token);
       dispatch(getProfile());
-      toast.success('Social login successful!');
-      setTimeout(() => router.push('/'), 800);
+      toast.success("Social login successful!");
+      setTimeout(() => router.push("/dashboard"), 800);
     } else if (error) {
       toast.error(error);
     }
@@ -79,9 +79,9 @@ export default function LoginForm({ setView }: LoginFormProps) {
       console.log("response",response)
       
       // Success - show toast and redirect
-      toast.success('Login successful!');
+      toast.success("Login successful!");
       setTimeout(() => {
-        router.push('/');
+        router.push("/dashboard");
       }, 800);
     } catch (err: any) {
       const errorMsg = err?.message || 'Login failed. Please try again.';
