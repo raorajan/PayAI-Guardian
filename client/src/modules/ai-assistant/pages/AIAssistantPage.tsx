@@ -6,6 +6,9 @@ import DashboardHeader from "@/modules/dashboard/components/DashboardHeader";
 import ChatInterface from "../components/ChatInterface";
 import ReasoningChain from "../components/ReasoningChain";
 import MarketDataWidget from "../components/MarketDataWidget";
+import FinancialAdvice from "../components/FinancialAdvice";
+import BudgetPlanning from "../components/BudgetPlanning";
+import InvestmentRecommendations from "../components/InvestmentRecommendations";
 import { AssistantMessage } from "../slice/aiAssistantSlice";
 
 const MOCK_MESSAGES: AssistantMessage[] = [
@@ -43,6 +46,7 @@ export default function AIAssistantPage() {
   const router = useRouter();
   const [activeReasoning, setActiveReasoning] = useState<string[]>([]);
   const [messages, setMessages] = useState<AssistantMessage[]>(MOCK_MESSAGES);
+  const [activeTab, setActiveTab] = useState<"chat" | "advice" | "budget" | "investments">("chat");
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -97,21 +101,43 @@ export default function AIAssistantPage() {
         </section>
 
         {/* Intelligence Sidebar */}
-        <aside className="w-[420px] shrink-0 bg-black/40 backdrop-blur-3xl p-8 flex flex-col gap-8 overflow-y-auto hidden xl:flex relative z-10">
-           <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-[#00C8FF]/10 flex items-center justify-center text-[#00C8FF]">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h2 className="text-lg font-black tracking-tight uppercase">Intelligence Feed</h2>
+        <aside className="w-[420px] shrink-0 bg-black/40 backdrop-blur-3xl p-8 flex flex-col gap-6 overflow-y-auto hidden xl:flex relative z-10">
+           {/* Tab Navigation */}
+           <div className="flex gap-2">
+              {([
+                { id: "chat", label: "Chat" },
+                { id: "advice", label: "Advice" },
+                { id: "budget", label: "Budget" },
+                { id: "investments", label: "Invest" },
+              ] as const).map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className="flex-1 px-3 py-2 rounded-lg text-[10px] font-bold uppercase transition-all"
+                  style={{
+                    background: activeTab === tab.id ? "rgba(0,200,255,0.15)" : "rgba(255,255,255,0.05)",
+                    border: `1px solid ${activeTab === tab.id ? "rgba(0,200,255,0.3)" : "rgba(255,255,255,0.1)"}`,
+                    color: activeTab === tab.id ? "#00C8FF" : "rgba(255,255,255,0.4)",
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
            </div>
 
-           <ReasoningChain steps={activeReasoning} />
-           
-           <div className="border-t border-white/5 pt-8">
-              <MarketDataWidget />
-           </div>
+           {/* Active Content */}
+           {activeTab === "chat" && (
+             <>
+               <ReasoningChain steps={activeReasoning} />
+               <div className="border-t border-white/5 pt-6">
+                  <MarketDataWidget />
+               </div>
+             </>
+           )}
+
+           {activeTab === "advice" && <FinancialAdvice />}
+           {activeTab === "budget" && <BudgetPlanning />}
+           {activeTab === "investments" && <InvestmentRecommendations />}
 
            {/* Security Status Card */}
            <div className="mt-auto p-6 rounded-2xl bg-gradient-to-br from-[#00C851]/10 to-transparent border border-[#00C851]/20">

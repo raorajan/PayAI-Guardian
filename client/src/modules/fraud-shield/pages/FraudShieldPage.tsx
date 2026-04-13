@@ -6,6 +6,9 @@ import DashboardHeader from "@/modules/dashboard/components/DashboardHeader";
 import RiskScoreGauge from "../components/RiskScoreGauge";
 import FraudTimeline from "../components/FraudTimeline";
 import SuspiciousTransactionAlert from "../components/SuspiciousTransactionAlert";
+import RealTimeScanner from "../components/RealTimeScanner";
+import FraudPatternLearning from "../components/FraudPatternLearning";
+import SuspiciousActivityAlerts from "../components/SuspiciousActivityAlerts";
 
 export default function FraudShieldPage() {
   const { user, isAuthenticated, loading } = useAppSelector((s) => s.auth);
@@ -72,28 +75,29 @@ export default function FraudShieldPage() {
         </div>
 
         {/* Tactical Information Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          <div className="lg:col-span-8 space-y-8">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-               <RiskScoreGauge />
-               <SuspiciousTransactionAlert />
-             </div>
-             
-             {/* Large Display/Logs Area placeholder or second large widget */}
-             <div className="p-8 rounded-[32px] bg-white/[0.02] border border-white/5 border-dashed flex flex-col items-center justify-center min-h-[300px] text-center opacity-40">
-                <svg className="w-12 h-12 mb-4 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 20l-5.447-2.724A2 2 0 013 15.485V4.515a2 2 0 011.553-1.94l6-1.5a2 2 0 01.894 0l6 1.5A2 2 0 0119 4.515v10.97a2 2 0 01-1.553 1.94L12 20m0 0l-3-1.5M12 20l3-1.5" />
-                </svg>
-                <h3 className="text-sm font-bold uppercase tracking-[0.2em] mb-2">Geo-Spatial Threat Map</h3>
-                <p className="text-[11px] max-w-[300px]">Node connection maps are being initialized. All global traffic is being rerouted via the AI Guardian secure mesh.</p>
-             </div>
+        <div className="space-y-8">
+          {/* Top Section: Risk Overview + Active Alerts */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-8 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <RiskScoreGauge />
+                <SuspiciousTransactionAlert />
+              </div>
+            </div>
+
+            <aside className="lg:col-span-4">
+              <FraudTimeline />
+            </aside>
           </div>
 
-          <aside className="lg:col-span-4 sticky top-10">
-             <FraudTimeline />
-          </aside>
-          
+          {/* Middle Section: Real-Time Scanner + Pattern Learning */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <RealTimeScanner />
+            <FraudPatternLearning />
+          </div>
+
+          {/* Bottom Section: Suspicious Activity Alerts */}
+          <SuspiciousActivityAlerts />
         </div>
 
       </main>
