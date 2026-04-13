@@ -102,44 +102,48 @@ export default function ModuleHub() {
         <h2 className="text-[11px] font-black text-white/40 uppercase tracking-[0.3em]">Guardian Protocol HUB</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
         {MODULES.map((module, i) => (
           <Link
             key={i}
             href={module.href}
-            className="group relative p-6 rounded-[32px] bg-white/[0.03] border border-white/10 transition-all hover:bg-white/[0.05] hover:border-white/20 active:scale-95 no-underline overflow-hidden"
+            className="group relative p-4 rounded-2xl bg-white/[0.03] border border-white/10 transition-all hover:bg-white/[0.05] hover:border-white/20 active:scale-95 no-underline overflow-hidden"
           >
             {/* Background Accent */}
             <div 
-              className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-[60px] opacity-10 group-hover:opacity-20 transition-opacity"
+              className="absolute -top-8 -right-8 w-20 h-20 rounded-full blur-[40px] opacity-10 group-hover:opacity-20 transition-opacity"
               style={{ backgroundColor: module.color }}
             />
 
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col items-center text-center gap-3">
+                {/* Icon */}
                 <div 
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-3 shadow-xl"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 group-hover:rotate-3 shadow-xl shrink-0"
                   style={{ background: `${module.color}15`, color: module.color, border: `1px solid ${module.color}30` }}
                 >
                   {module.icon}
                 </div>
-                <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{module.category}</span>
-              </div>
 
-              <h3 className="text-xl font-black text-white mb-2 tracking-tight group-hover:text-[#00C8FF] transition-colors">
-                {module.title}
-              </h3>
-              <p className="text-[13px] text-white/40 leading-relaxed mb-6 h-10 line-clamp-2 italic">
-                {module.desc}
-              </p>
+                {/* Title */}
+                <h3 className="text-sm font-bold text-white tracking-tight group-hover:text-[#00C8FF] transition-colors line-clamp-1">
+                  {module.title}
+                </h3>
 
-              <div className="flex items-center gap-2 group/btn">
-                <span className="text-[11px] font-black uppercase tracking-widest text-[#00C8FF] group-hover:translate-x-1 transition-transform">
-                  {module.action}
-                </span>
-                <svg className="w-4 h-4 text-[#00C8FF] opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
+                {/* Description - Hidden on small screens */}
+                <p className="text-[11px] text-white/40 leading-relaxed hidden xl:block line-clamp-2">
+                  {module.desc}
+                </p>
+
+                {/* Action Button */}
+                <div className="flex items-center gap-1.5 group/btn mt-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#00C8FF] group-hover/btn:translate-x-0.5 transition-transform">
+                    {module.action}
+                  </span>
+                  <svg className="w-3 h-3 text-[#00C8FF] opacity-0 group-hover/btn:opacity-100 transition-all translate-x-[-8px] group-hover/btn:translate-x-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </div>
               </div>
             </div>
           </Link>
