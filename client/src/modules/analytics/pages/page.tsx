@@ -1,5 +1,5 @@
-import React from 'react';
+import AnalyticsPage from "./AnalyticsPage";
 
 export default function analyticsPage() {
-  return <div className="p-6">analytics Module Page</div>;
+  return <AnalyticsPage />;
 }
