@@ -1,5 +1,5 @@
-import React from 'react';
+import SettingsPage from "./SettingsPage";
 
 export default function settingsPage() {
-  return <div className="p-6">settings Module Page</div>;
+  return <SettingsPage />;
 }
