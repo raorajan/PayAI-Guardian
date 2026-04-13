@@ -6,6 +6,8 @@ export { default as FraudRiskAlert } from './dashboard/components/FraudRiskAlert
 export { default as QuickActions } from './dashboard/components/QuickActions';
 export { default as SpendingChart } from './dashboard/components/SpendingChart';
 export { default as AIInsightCard } from './dashboard/components/AIInsightCard';
+export { default as WelcomeBanner } from './dashboard/components/WelcomeBanner';
+export { default as SpendingInsights } from './dashboard/components/SpendingInsights';
 export { default as PaymentForm } from './payments/components/PaymentForm';
 export { default as RecipientSearch } from './payments/components/RecipientSearch';
 export { default as SplitPaymentModal } from './payments/components/SplitPaymentModal';
