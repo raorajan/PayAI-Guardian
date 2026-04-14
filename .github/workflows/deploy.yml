@@ -111,7 +111,7 @@ jobs:
             "JWT_EXPIRE=${JWT_EXPIRE}" \
             "DATABASE_URL=${DATABASE_URL}" \
             "FRONTEND_URL=${FRONTEND_URL}" \
-            "CORS_ALLOWED_ORIGINS=https://payaiguardian.raorajan.pro" \
+            "CORS_ALLOWED_ORIGINS=https://payaiguardian.raorajan.pro,https://api.payaiguardian.raorajan.pro" \
             "API_USER_URL=http://localhost:8001" \
             "API_PAYMENT_URL=http://localhost:8002" \
             "API_FRAUD_URL=http://localhost:8003" \
