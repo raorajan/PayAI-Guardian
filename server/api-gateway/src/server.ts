@@ -85,6 +85,7 @@ app.use(express.urlencoded({ extended: true }));
 const swaggerDir = path.resolve(__dirname, 'swagger');
 const gatewayDocs = YAML.load(path.join(swaggerDir, 'gateway.swagger.yaml'));
 const authDocs = YAML.load(path.join(swaggerDir, 'auth.swagger.yaml'));
+const aiDocs = YAML.load(path.join(swaggerDir, 'ai.swagger.yaml'));
 
 const combinedDocs = {
   openapi: '3.0.0',
@@ -96,15 +97,18 @@ const combinedDocs = {
   tags: [
     ...(gatewayDocs.tags || []),
     ...(authDocs.tags || []),
+    ...(aiDocs.tags || []),
   ],
   paths: { 
     ...gatewayDocs.paths, 
     ...authDocs.paths,
+    ...aiDocs.paths,
   },
   components: {
     schemas: {
       ...(gatewayDocs.components?.schemas || {}),
       ...(authDocs.components?.schemas || {}),
+      ...(aiDocs.components?.schemas || {}),
     },
     securitySchemes: { 
       ...(gatewayDocs.components?.securitySchemes || {}),

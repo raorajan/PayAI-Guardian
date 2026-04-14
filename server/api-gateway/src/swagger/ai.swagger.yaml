@@ -1,0 +1,46 @@
+tags:
+  - name: AI
+    description: AI Banking Service endpoints
+
+paths:
+  /api/v1/ai/onboarding:
+    post:
+      tags:
+        - AI
+      summary: Onboarding chat assistant
+      description: Chat with the AI assistant for onboarding guidance.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, assistant, system]
+                      content:
+                        type: string
+      responses:
+        200:
+          description: Successful AI response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    description: AI assistant's reply
+        400:
+          description: Invalid messages format
+        500:
+          description: AI service error
