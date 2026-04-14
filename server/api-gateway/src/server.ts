@@ -12,8 +12,14 @@ dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 8000;
 app.set('trust proxy', 1);
+
 const API_USER_URL = process.env.API_USER_URL || 'http://localhost:8001';
+const API_PAYMENT_URL = process.env.API_PAYMENT_URL || 'http://localhost:8002';
+const API_FRAUD_URL = process.env.API_FRAUD_URL || 'http://localhost:8003';
 const API_AI_URL = process.env.API_AI_URL || 'http://localhost:8004';
+const API_ANALYTICS_URL = process.env.API_ANALYTICS_URL || 'http://localhost:8005';
+const API_NOTIFICATION_URL = process.env.API_NOTIFICATION_URL || 'http://localhost:8006';
+
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // 1. Helmet Configuration - Before CORS
@@ -33,9 +39,11 @@ app.use((req: Request, res: Response, next) => {
     res.header('Access-Control-Allow-Origin', origin || '*');
   } else {
     // Production mode: validate origin
-    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3002'];
-    if (origin && allowedOrigins.includes(origin)) {
-      res.header('Access-Control-Allow-Origin', origin);
+    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',').map(o => o.trim().toLowerCase().replace(/\/$/, '')) || ['https://payaiguardian.raorajan.pro'];
+    const normalizedOrigin = origin?.trim().toLowerCase().replace(/\/$/, '');
+    
+    if (normalizedOrigin && allowedOrigins.includes(normalizedOrigin)) {
+      res.header('Access-Control-Allow-Origin', origin!);
     }
   }
   
@@ -63,10 +71,13 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     
     // Production mode: validate against allowed origins
-    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3002'];
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',').map(o => o.trim().toLowerCase().replace(/\/$/, '')) || ['https://payaiguardian.raorajan.pro'];
+    const normalizedOrigin = origin.trim().toLowerCase().replace(/\/$/, '');
+    
+    if (allowedOrigins.indexOf(normalizedOrigin) !== -1) {
       callback(null, true);
     } else {
+      console.error(`[CORS Error] Origin rejected: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -81,7 +92,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 2. Swagger Documentation
+// 4. Swagger Documentation
 const swaggerDir = path.resolve(__dirname, 'swagger');
 const gatewayDocs = YAML.load(path.join(swaggerDir, 'gateway.swagger.yaml'));
 const authDocs = YAML.load(path.join(swaggerDir, 'auth.swagger.yaml'));
@@ -121,7 +132,6 @@ const combinedDocs = {
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(combinedDocs));
 
-
 const processCorsHeaders = (headers: any, req: Request) => {
   delete headers['access-control-allow-origin'];
   delete headers['Access-Control-Allow-Origin'];
@@ -136,8 +146,9 @@ const processCorsHeaders = (headers: any, req: Request) => {
   if (NODE_ENV !== 'production') {
     headers['Access-Control-Allow-Origin'] = origin || '*';
   } else if (origin) {
-    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || ['http://localhost:3002'];
-    if (allowedOrigins.includes(origin)) {
+    const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',').map(o => o.trim().toLowerCase().replace(/\/$/, '')) || ['https://payaiguardian.raorajan.pro'];
+    const normalizedOrigin = origin.trim().toLowerCase().replace(/\/$/, '');
+    if (allowedOrigins.includes(normalizedOrigin)) {
       headers['Access-Control-Allow-Origin'] = origin;
     }
   }
@@ -148,13 +159,26 @@ const processCorsHeaders = (headers: any, req: Request) => {
   return headers;
 };
 
+// Proxy error helper
+const onProxyError = (err: any, res: Response, target: string) => {
+  console.error(`[Proxy Error] Connection failed to ${target}: ${err.message}`);
+  res.status(503).json({
+    success: false,
+    message: 'Service temporarily unavailable. Please try again later.',
+  });
+};
+
+// --- Proxy Routes ---
+
+// AI Service
 app.use('/api/v1/ai', proxy(API_AI_URL, {
   proxyReqPathResolver: (req) => req.originalUrl,
   preserveHostHdr: true,
+  proxyErrorHandler: (err, res, next) => onProxyError(err, res, API_AI_URL),
   proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
     proxyReqOpts.headers = {
       ...proxyReqOpts.headers,
-      'Origin': srcReq.headers.origin || 'http://localhost:3002',
+      'Origin': srcReq.headers.origin || 'https://payaiguardian.raorajan.pro',
     };
     return proxyReqOpts;
   },
@@ -164,13 +188,47 @@ app.use('/api/v1/ai', proxy(API_AI_URL, {
   userResHeaderDecorator: (headers, req) => processCorsHeaders(headers, req as Request)
 }));
 
+// Payment Service
+app.use('/api/v1/payments', proxy(API_PAYMENT_URL, {
+  proxyReqPathResolver: (req) => req.originalUrl,
+  preserveHostHdr: true,
+  proxyErrorHandler: (err, res, next) => onProxyError(err, res, API_PAYMENT_URL),
+  userResHeaderDecorator: (headers, req) => processCorsHeaders(headers, req as Request)
+}));
+
+// Fraud Detection Service
+app.use('/api/v1/fraud', proxy(API_FRAUD_URL, {
+  proxyReqPathResolver: (req) => req.originalUrl,
+  preserveHostHdr: true,
+  proxyErrorHandler: (err, res, next) => onProxyError(err, res, API_FRAUD_URL),
+  userResHeaderDecorator: (headers, req) => processCorsHeaders(headers, req as Request)
+}));
+
+// Analytics Service
+app.use('/api/v1/analytics', proxy(API_ANALYTICS_URL, {
+  proxyReqPathResolver: (req) => req.originalUrl,
+  preserveHostHdr: true,
+  proxyErrorHandler: (err, res, next) => onProxyError(err, res, API_ANALYTICS_URL),
+  userResHeaderDecorator: (headers, req) => processCorsHeaders(headers, req as Request)
+}));
+
+// Notification Service
+app.use('/api/v1/notifications', proxy(API_NOTIFICATION_URL, {
+  proxyReqPathResolver: (req) => req.originalUrl,
+  preserveHostHdr: true,
+  proxyErrorHandler: (err, res, next) => onProxyError(err, res, API_NOTIFICATION_URL),
+  userResHeaderDecorator: (headers, req) => processCorsHeaders(headers, req as Request)
+}));
+
+// User Service (Catch-all for other v1 routes)
 app.use('/api/v1', proxy(API_USER_URL, {
   proxyReqPathResolver: (req) => req.originalUrl,
   preserveHostHdr: true,
+  proxyErrorHandler: (err, res, next) => onProxyError(err, res, API_USER_URL),
   proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
     proxyReqOpts.headers = {
       ...proxyReqOpts.headers,
-      'Origin': srcReq.headers.origin || 'http://localhost:3002',
+      'Origin': srcReq.headers.origin || 'https://payaiguardian.raorajan.pro',
     };
     return proxyReqOpts;
   },
@@ -179,6 +237,7 @@ app.use('/api/v1', proxy(API_USER_URL, {
   },
   userResHeaderDecorator: (headers, req) => processCorsHeaders(headers, req as Request)
 }));
+
 app.get('/', (req: Request, res: Response) => {
   res.json({ success: true, message: 'API Gateway is running' });
 });
