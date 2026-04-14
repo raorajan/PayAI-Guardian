@@ -10,3 +10,4 @@ export { default as TestimonialsSection } from "./TestimonialsSection";
 export { default as PricingSection } from "./PricingSection";
 export { default as CTASection } from "./CTASection";
 export { default as HomeFooter } from "./HomeFooter";
+export { default as SupportChatWidget } from "./SupportChatWidget";

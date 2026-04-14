@@ -11,6 +11,7 @@ import {
   PricingSection,
   CTASection,
   HomeFooter,
+  SupportChatWidget,
 } from "@/modules/home/components";
 
 export const metadata: Metadata = {
@@ -48,6 +49,7 @@ export default function HomePage() {
       <PricingSection />
       <CTASection />
       <HomeFooter />
+      <SupportChatWidget />
     </main>
   );
 }
