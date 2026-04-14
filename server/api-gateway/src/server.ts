@@ -13,6 +13,7 @@ const app: Application = express();
 const PORT = process.env.PORT || 8000;
 app.set('trust proxy', 1);
 const API_USER_URL = process.env.API_USER_URL || 'http://localhost:8001';
+const API_AI_URL = process.env.API_AI_URL || 'http://localhost:8004';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // 1. Helmet Configuration - Before CORS
@@ -146,6 +147,23 @@ const processCorsHeaders = (headers: any, req: Request) => {
   
   return headers;
 };
+
+// Proxy /api/v1/ai to AI Service
+app.use('/api/v1/ai', proxy(API_AI_URL, {
+  proxyReqPathResolver: (req) => req.originalUrl,
+  preserveHostHdr: true,
+  proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
+    proxyReqOpts.headers = {
+      ...proxyReqOpts.headers,
+      'Origin': srcReq.headers.origin || 'http://localhost:3002',
+    };
+    return proxyReqOpts;
+  },
+  proxyReqBodyDecorator: (bodyContent, srcReq) => {
+    return srcReq.body && Object.keys(srcReq.body).length ? JSON.stringify(srcReq.body) : bodyContent;
+  },
+  userResHeaderDecorator: (headers, req) => processCorsHeaders(headers, req as Request)
+}));
 
 // Catch-all for /api/v1 to proxy to User Service
 app.use('/api/v1', proxy(API_USER_URL, {

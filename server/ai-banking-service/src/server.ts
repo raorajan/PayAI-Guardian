@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
+import aiRoutes from './routes/ai.routes';
 
 dotenv.config();
 
@@ -11,6 +12,9 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Versioned routes
+app.use('/api/v1', aiRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Welcome to AI Banking Service' });

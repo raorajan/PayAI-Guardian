@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { useAppDispatch, useAppSelector } from "@/redux/store";
+import { addUserMessage, addAssistantMessage, sendOnboardingMessage } from "../slice/homeSlice";
 
 interface Message {
   id: string;
@@ -8,19 +10,42 @@ interface Message {
   timestamp: string;
 }
 
+const COMMON_QUESTIONS: Record<string, string> = {
+  "is this real banking?": "We use Plaid to link real banks and Stripe for transfers. However, our sandbox environment uses fake money so you can test everything safely without risk.",
+  "do you store my bank password?": "Never. Plaid uses secure, read-only access—we can see balances for monitoring but can't touch your money without your explicit approval.",
+  "what happens if ai blocks a real payment?": "You'll get an instant alert with a clear explanation. You can override it with one click, and every override helps our AI learn your patterns better.",
+  "can i trust investment advice?": "Our AI pulls live market data and shows the reasoning for every recommendation. While highly accurate, we always recommend consulting a human advisor for major decisions.",
+  "how is this free?": "Our sandbox and standard security features are free forever. Premium banking features and high-volume fraud protection have small fees, but you only pay when you go live.",
+};
+
+const ONBOARDING_CHIPS = [
+  "Show me how fraud protection works",
+  "What makes you different?",
+  "Take me to the demo",
+  "Is my money safe?",
+];
+
 export default function SupportChatWidget() {
+  const dispatch = useAppDispatch();
+  const { chatMessages: messages, chatLoading: isTyping } = useAppSelector((s) => s.home);
+  
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: "Hi there! I'm your AI Guardian assistant. How can I help you explore PayAI today?",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
-  const [isTyping, setIsTyping] = useState(false);
+  const [hasGreeted, setHasGreeted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-Greet Logic
+  useEffect(() => {
+    const isNewUser = !localStorage.getItem("payai_visited");
+    if (isNewUser && !hasGreeted) {
+      const timer = setTimeout(() => {
+        setIsOpen(true);
+        setHasGreeted(true);
+        localStorage.setItem("payai_visited", "true");
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasGreeted]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -28,39 +53,66 @@ export default function SupportChatWidget() {
     }
   }, [messages, isTyping]);
 
-  const handleSend = () => {
-    if (!message.trim()) return;
+  const handleSend = async (content?: string) => {
+    const textToSend = content || message;
+    if (!textToSend.trim()) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: message,
+      content: textToSend,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    dispatch(addUserMessage(userMsg));
     setMessage("");
-    setIsTyping(true);
 
-    // Mock AI Response
-    setTimeout(() => {
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: getMockResponse(message),
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsTyping(false);
-    }, 1500);
+    // 1. Check Local Pre-programmed Answers
+    const lowInput = textToSend.toLowerCase().replace(/[?]/g, "").trim();
+    if (COMMON_QUESTIONS[lowInput]) {
+      setTimeout(() => {
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: COMMON_QUESTIONS[lowInput],
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        dispatch(addAssistantMessage(aiMsg));
+      }, 800);
+      return;
+    }
+
+    // 2. Handle Guided Tour Logic (Specific Chips)
+    if (textToSend === "Show me how fraud protection works") {
+       handleTourResponse("Great choice! Our AI scans every transaction in under 100ms. I'll simulate a fraud attempt in your dashboard so you can see it in action. Ready?");
+       return;
+    }
+    if (textToSend === "What makes you different?") {
+       handleTourResponse("Unlike traditional banks, we block fraud BEFORE it happens, not after. Plus, I'm here 24/7 to help with financial decisions. Want to see a live example?");
+       return;
+    }
+
+    // 3. Dispatch Redux Thunk for OpenAI Call
+    const history = messages.map(m => ({
+      role: m.role,
+      content: m.content
+    }));
+
+    dispatch(sendOnboardingMessage({
+      messages: [...history, { role: "user", content: textToSend }]
+    }));
   };
 
-  const getMockResponse = (input: string) => {
-    const lowInput = input.toLowerCase();
-    if (lowInput.includes("security")) return "PayAI Guardian uses real-time AI fraud detection and blockchain-based auditing to keep your funds safe.";
-    if (lowInput.includes("pricing") || lowInput.includes("free")) return "We have a free tier for individuals and premium plans for power users and businesses. Check our Pricing section for details!";
-    if (lowInput.includes("transfer")) return "Transfers are instant and protected by our AI Fraud Shield. You can send money via username or wallet address.";
-    return "That's a great question! PayAI Guardian is designed to revolutionize how you handle finances with AI-driven security. Is there something specific about our features you'd like to know?";
+  const handleTourResponse = (content: string) => {
+    setTimeout(() => {
+      const aiMsg: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      dispatch(addAssistantMessage(aiMsg));
+    }, 1000);
   };
 
   return (
@@ -68,7 +120,7 @@ export default function SupportChatWidget() {
       {/* Chat Window */}
       {isOpen && (
         <div 
-          className="mb-4 w-[340px] h-[480px] bg-[#0A0F1A]/95 backdrop-blur-2xl border border-white/10 rounded-[24px] shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_30px_rgba(0,200,255,0.1)] overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out"
+          className="mb-4 w-[340px] h-[460px] bg-[#0A0F1A]/95 backdrop-blur-2xl border border-white/10 rounded-[24px] shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_30px_rgba(0,200,255,0.1)] overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out"
         >
           {/* Header */}
           <div className="p-5 border-b border-white/5 bg-gradient-to-r from-[#00C8FF]/10 to-transparent flex items-center justify-between">
@@ -126,6 +178,21 @@ export default function SupportChatWidget() {
                 </div>
               </div>
             )}
+
+            {/* Chips */}
+            {!isTyping && messages.length < 3 && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {ONBOARDING_CHIPS.map((chip) => (
+                  <button
+                    key={chip}
+                    onClick={() => handleSend(chip)}
+                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[#00C8FF] hover:bg-[#00C8FF] hover:text-[#020408] hover:border-transparent transition-all"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Input */}
@@ -140,7 +207,7 @@ export default function SupportChatWidget() {
                 className="flex-1 bg-white/5 border border-white/10 text-white text-[13px] px-4 py-2.5 rounded-xl focus:outline-none focus:border-[#00C8FF]/50 transition-all placeholder:text-white/20"
               />
               <button 
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={!message.trim()}
                 className={`p-2.5 rounded-xl transition-all ${
                   message.trim() 

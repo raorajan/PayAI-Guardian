@@ -7,12 +7,14 @@ import type { TypedUseSelectorHook } from 'react-redux';
 import authReducer from './../modules/auth/slice/authSlice';
 import fraudShieldReducer from './../modules/fraud-shield/slice/fraudShieldSlice';
 import aiAssistantReducer from './../modules/ai-assistant/slice/aiAssistantSlice';
+import homeReducer from './../modules/home/slice/homeSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     fraudShield: fraudShieldReducer,
     aiAssistant: aiAssistantReducer,
+    home: homeReducer,
   },
 });
 
