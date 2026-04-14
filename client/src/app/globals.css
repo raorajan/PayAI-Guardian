@@ -15,82 +15,99 @@
 
 @theme {
   /* ── Colors: Backgrounds ──────────────────────────── */
-  --color-guardian-base:      #050810;
-  --color-guardian-surface:   #080C1E;
-  --color-guardian-elevated:  #0F1320;
+  --color-guardian-base: #050810;
+  --color-guardian-surface: #080C1E;
+  --color-guardian-elevated: #0F1320;
   --color-guardian-secondary: #1A1A24;
-  --color-guardian-tertiary:  #2A2A35;
+  --color-guardian-tertiary: #2A2A35;
 
   /* ── Colors: Brand Primary ────────────────────────── */
-  --color-primary:            #0A66C2;
-  --color-primary-dark:       #084A8F;
-  --color-primary-light:      #4060FF;
+  --color-primary: #0A66C2;
+  --color-primary-dark: #084A8F;
+  --color-primary-light: #4060FF;
 
   /* ── Colors: Accent Cyan ──────────────────────────── */
-  --color-accent-cyan:        #00C8FF;
-  --color-accent-glow:        rgba(0,200,255,0.3);
-  --color-accent-focus:       rgba(0,200,255,0.12);
-  --color-accent-subtle:      rgba(0,200,255,0.04);
+  --color-accent-cyan: #00C8FF;
+  --color-accent-glow: rgba(0, 200, 255, 0.3);
+  --color-accent-focus: rgba(0, 200, 255, 0.12);
+  --color-accent-subtle: rgba(0, 200, 255, 0.04);
 
   /* ── Colors: Security / Status ────────────────────── */
-  --color-security:           #8040FF;
-  --color-danger:             #FF3B5C;
-  --color-warning:            #FFA500;
-  --color-success:            #00C851;
+  --color-security: #8040FF;
+  --color-danger: #FF3B5C;
+  --color-warning: #FFA500;
+  --color-success: #00C851;
 
   /* ── Colors: Orbit ────────────────────────────────── */
-  --color-orbit-cyan:         #00C8FF;
-  --color-orbit-purple:       #8040FF;
-  --color-orbit-blue:         #4060FF;
+  --color-orbit-cyan: #00C8FF;
+  --color-orbit-purple: #8040FF;
+  --color-orbit-blue: #4060FF;
 
   /* ── Colors: Text ─────────────────────────────────── */
-  --color-text-primary:       #FFFFFF;
-  --color-text-secondary:     rgba(255,255,255,0.70);
-  --color-text-muted:         rgba(255,255,255,0.45);
-  --color-text-faint:         rgba(255,255,255,0.30);
-  --color-text-disabled:      rgba(255,255,255,0.20);
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: rgba(255, 255, 255, 0.70);
+  --color-text-muted: rgba(255, 255, 255, 0.45);
+  --color-text-faint: rgba(255, 255, 255, 0.30);
+  --color-text-disabled: rgba(255, 255, 255, 0.20);
 
   /* ── Colors: Borders ──────────────────────────────── */
-  --color-border:             rgba(255,255,255,0.08);
-  --color-border-subtle:      rgba(255,255,255,0.05);
-  --color-border-strong:      rgba(255,255,255,0.15);
-  --color-glass-border:       rgba(0,200,255,0.18);
-  --color-glass-white:        rgba(255,255,255,0.04);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-strong: rgba(255, 255, 255, 0.15);
+  --color-glass-border: rgba(0, 200, 255, 0.18);
+  --color-glass-white: rgba(255, 255, 255, 0.04);
 
   /* ── Font Families ────────────────────────────────── */
   --font-primary: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono:    "JetBrains Mono", "Fira Code", monospace;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
   --font-heading: Inter, "SF Pro Display", sans-serif;
 
   /* ── Font Sizes (includes 2xs and sm at 13px) ─────── */
-  --text-2xs:  0.6875rem;   /* 11px */
-  --text-xs:   0.75rem;     /* 12px */
-  --text-sm:   0.8125rem;   /* 13px */
-  --text-base: 0.875rem;    /* 14px */
-  --text-md:   1rem;        /* 16px */
-  --text-lg:   1.125rem;    /* 18px */
-  --text-xl:   1.25rem;     /* 20px */
-  --text-2xl:  1.5rem;      /* 24px */
-  --text-3xl:  1.875rem;    /* 30px */
-  --text-4xl:  2.25rem;     /* 36px */
-  --text-5xl:  3rem;        /* 48px */
+  --text-2xs: 0.6875rem;
+  /* 11px */
+  --text-xs: 0.75rem;
+  /* 12px */
+  --text-sm: 0.8125rem;
+  /* 13px */
+  --text-base: 0.875rem;
+  /* 14px */
+  --text-md: 1rem;
+  /* 16px */
+  --text-lg: 1.125rem;
+  /* 18px */
+  --text-xl: 1.25rem;
+  /* 20px */
+  --text-2xl: 1.5rem;
+  /* 24px */
+  --text-3xl: 1.875rem;
+  /* 30px */
+  --text-4xl: 2.25rem;
+  /* 36px */
+  --text-5xl: 3rem;
+  /* 48px */
 
   /* ── Border Radius ────────────────────────────────── */
-  --radius-sm:   0.375rem;  /*  6px */
-  --radius-md:   0.5rem;    /*  8px */
-  --radius-lg:   0.625rem;  /* 10px — inputs */
-  --radius-xl:   0.75rem;   /* 12px */
-  --radius-2xl:  1rem;      /* 16px */
-  --radius-card: 1.25rem;   /* 20px — glass card */
+  --radius-sm: 0.375rem;
+  /*  6px */
+  --radius-md: 0.5rem;
+  /*  8px */
+  --radius-lg: 0.625rem;
+  /* 10px — inputs */
+  --radius-xl: 0.75rem;
+  /* 12px */
+  --radius-2xl: 1rem;
+  /* 16px */
+  --radius-card: 1.25rem;
+  /* 20px — glass card */
   --radius-full: 9999px;
 
   /* ── Box Shadows ──────────────────────────────────── */
-  --shadow-glow-cyan:         0 0 0 3px rgba(0,200,255,0.12);
-  --shadow-glow-primary:      0 4px 20px rgba(0,150,255,0.4);
-  --shadow-glow-primary-hover:0 6px 28px rgba(0,150,255,0.65);
-  --shadow-glow-card:         0 0 50px rgba(0,100,220,0.18), 0 0 100px rgba(80,30,180,0.1);
-  --shadow-glow-logo:         0 0 14px rgba(0,100,220,0.5);
-  --shadow-glow-orbit:        0 0 12px rgba(0,200,255,0.9);
+  --shadow-glow-cyan: 0 0 0 3px rgba(0, 200, 255, 0.12);
+  --shadow-glow-primary: 0 4px 20px rgba(0, 150, 255, 0.4);
+  --shadow-glow-primary-hover: 0 6px 28px rgba(0, 150, 255, 0.65);
+  --shadow-glow-card: 0 0 50px rgba(0, 100, 220, 0.18), 0 0 100px rgba(80, 30, 180, 0.1);
+  --shadow-glow-logo: 0 0 14px rgba(0, 100, 220, 0.5);
+  --shadow-glow-orbit: 0 0 12px rgba(0, 200, 255, 0.9);
 }
 
 /* ── Global Base Styles ──────────────────────────────────── */
@@ -100,9 +117,12 @@
   box-sizing: border-box;
 }
 
-html,
-body {
+html {
+  overflow: hidden;
   height: 100%;
+}
+
+body {
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
@@ -110,46 +130,95 @@ body {
   background-color: var(--color-guardian-base);
   color: var(--color-text-primary);
   font-family: var(--font-primary);
+  overflow-y: auto;
   overflow-x: hidden;
+  height: 100%;
 }
 
 /* ── Keyframe Animations ─────────────────────────────────── */
 @keyframes spin-slow {
-  from { transform: rotate(0deg);   }
-  to   { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes spin-rev {
-  from { transform: rotate(360deg); }
-  to   { transform: rotate(0deg);   }
+  from {
+    transform: rotate(360deg);
+  }
+
+  to {
+    transform: rotate(0deg);
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.55; }
-  50%       { opacity: 1;    }
+
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 
 @keyframes orb-float {
-  0%, 100% { transform: translateY(0);     }
-  50%       { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 /* Alias used by Tailwind arbitrary: animate-[float_5s_...] */
 @keyframes float {
-  0%, 100% { transform: translateY(0);     }
-  50%       { transform: translateY(-18px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-18px);
+  }
 }
 
 /* ── Animation Utility Classes ───────────────────────────── */
-.anim-spin-slow   { animation: spin-slow   22s linear infinite; }
-.anim-spin-rev    { animation: spin-rev    14s linear infinite; }
-.anim-pulse-glow  { animation: pulse-glow   3s ease-in-out infinite; }
-.anim-float       { animation: orb-float    4s ease-in-out infinite; }
+.anim-spin-slow {
+  animation: spin-slow 22s linear infinite;
+}
+
+.anim-spin-rev {
+  animation: spin-rev 14s linear infinite;
+}
+
+.anim-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.anim-float {
+  animation: orb-float 4s ease-in-out infinite;
+}
 
 /* ── Hide scrollbars globally (utility) ──────────────────── */
-.scrollbar-hidden::-webkit-scrollbar { display: none; }
-.scrollbar-hidden { scrollbar-width: none; }
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hidden {
+  scrollbar-width: none;
+}
 
 /* ── Global Custom Thin Scrollbar ────────────────────────── */
 ::-webkit-scrollbar {
@@ -173,7 +242,7 @@ body {
 }
 
 /* Firefox support */
-* {
+body {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }

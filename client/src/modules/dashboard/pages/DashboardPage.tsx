@@ -39,7 +39,7 @@ export default function DashboardPage() {
 
   return (
     <div
-      className="min-h-screen w-full relative overflow-x-hidden"
+      className="min-h-screen w-full relative"
       style={{ fontFamily: "Inter, -apple-system, sans-serif", background: "#050810" }}
     >
       <div className="absolute inset-0 pointer-events-none">
