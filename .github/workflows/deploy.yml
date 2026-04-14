@@ -265,14 +265,14 @@ jobs:
 
       - name: Install, build & restart frontend on server
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+          ssh -o ServerAliveInterval=60 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
             set -e
             source ~/.nvm/nvm.sh
             cd ${{ env.DEPLOY_PATH }}/client
             echo '📦 Installing frontend dependencies...'
             npm install --silent
-            echo '🔨 Building Next.js...'
-            npm run build
+            echo '🔨 Building Next.js with memory limit...'
+            NODE_OPTIONS='--max-old-space-size=2048' npm run build
             echo '🚀 Restarting payai-frontend via PM2...'
             if pm2 list | grep -q 'payai-frontend'; then
               pm2 restart payai-frontend --update-env
