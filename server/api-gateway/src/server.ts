@@ -121,11 +121,8 @@ const combinedDocs = {
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(combinedDocs));
 
-// 3. Proxy Routes with CORS Header Management
 
-// Function to process CORS headers on proxied responses
 const processCorsHeaders = (headers: any, req: Request) => {
-  // Remove backend service CORS headers to prevent conflicts
   delete headers['access-control-allow-origin'];
   delete headers['Access-Control-Allow-Origin'];
   delete headers['access-control-allow-credentials'];
@@ -135,7 +132,6 @@ const processCorsHeaders = (headers: any, req: Request) => {
   delete headers['access-control-allow-headers'];
   delete headers['Access-Control-Allow-Headers'];
   
-  // Set gateway CORS headers
   const origin = req.headers.origin;
   if (NODE_ENV !== 'production') {
     headers['Access-Control-Allow-Origin'] = origin || '*';
@@ -152,7 +148,6 @@ const processCorsHeaders = (headers: any, req: Request) => {
   return headers;
 };
 
-// Proxy /api/v1/ai to AI Service
 app.use('/api/v1/ai', proxy(API_AI_URL, {
   proxyReqPathResolver: (req) => req.originalUrl,
   preserveHostHdr: true,
@@ -169,11 +164,9 @@ app.use('/api/v1/ai', proxy(API_AI_URL, {
   userResHeaderDecorator: (headers, req) => processCorsHeaders(headers, req as Request)
 }));
 
-// Catch-all for /api/v1 to proxy to User Service
 app.use('/api/v1', proxy(API_USER_URL, {
   proxyReqPathResolver: (req) => req.originalUrl,
   preserveHostHdr: true,
-  // Preserve headers
   proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
     proxyReqOpts.headers = {
       ...proxyReqOpts.headers,
@@ -181,15 +174,11 @@ app.use('/api/v1', proxy(API_USER_URL, {
     };
     return proxyReqOpts;
   },
-  // Ensure the body is correctly forwarded after being parsed by express.json()
   proxyReqBodyDecorator: (bodyContent, srcReq) => {
     return srcReq.body && Object.keys(srcReq.body).length ? JSON.stringify(srcReq.body) : bodyContent;
   },
-  // Process CORS headers on response
   userResHeaderDecorator: (headers, req) => processCorsHeaders(headers, req as Request)
 }));
-
-// Health Check
 app.get('/', (req: Request, res: Response) => {
   res.json({ success: true, message: 'API Gateway is running' });
 });
