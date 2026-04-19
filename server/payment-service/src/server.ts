@@ -3,6 +3,11 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 
+import { connectDB } from './config/database';
+
+import accountRoutes from './routes/account.routes';
+import transactionRoutes from './routes/transaction.routes';
+
 dotenv.config();
 
 const app: Application = express();
@@ -16,6 +21,10 @@ app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Welcome to Payment Service' });
 });
 
+// Routes
+app.use('/api/v1/accounts', accountRoutes);
+app.use('/api/v1/transactions', transactionRoutes);
+
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -23,8 +32,9 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`Payment Service running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  await connectDB();
 });
 
 process.on('unhandledRejection', (err: Error) => {

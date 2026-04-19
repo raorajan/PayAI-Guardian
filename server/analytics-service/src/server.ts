@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 
+import analyticsRoutes from './routes/analytics.routes';
+
 dotenv.config();
 
 const app: Application = express();
@@ -15,6 +17,9 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Welcome to Analytics Service' });
 });
+
+// Routes
+app.use('/api/v1/analytics', analyticsRoutes);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({

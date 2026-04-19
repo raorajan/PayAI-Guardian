@@ -14,20 +14,26 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@guardian/shared":"file:../shared",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
+    "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "mongoose": "^9.3.0",
-    "zod": "^3.21.4"
+    "postgres": "^3.4.8",
+    "zod": "^3.21.4",
+    "shared": "file:../shared"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/mongoose": "^5.11.96",
     "@types/node": "^25.5.0",
-    "nodemon": "^3.1.14",
+    "@types/pg": "^8.11.11",
     "concurrently": "^7.6.0",
+    "drizzle-kit": "^0.31.10",
+    "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

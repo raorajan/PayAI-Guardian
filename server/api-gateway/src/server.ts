@@ -17,8 +17,8 @@ const API_USER_URL = process.env.API_USER_URL || 'http://localhost:8001';
 const API_PAYMENT_URL = process.env.API_PAYMENT_URL || 'http://localhost:8002';
 const API_FRAUD_URL = process.env.API_FRAUD_URL || 'http://localhost:8003';
 const API_AI_URL = process.env.API_AI_URL || 'http://localhost:8004';
-const API_ANALYTICS_URL = process.env.API_ANALYTICS_URL || 'http://localhost:8005';
-const API_NOTIFICATION_URL = process.env.API_NOTIFICATION_URL || 'http://localhost:8006';
+const API_ANALYTICS_URL = process.env.API_ANALYTICS_URL || 'http://localhost:8006';
+const API_NOTIFICATION_URL = process.env.API_NOTIFICATION_URL || 'http://localhost:8005';
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 

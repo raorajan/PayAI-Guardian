@@ -3,6 +3,10 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 
+import { connectDB } from './config/database';
+
+import fraudRoutes from './routes/fraud.routes';
+
 dotenv.config();
 
 const app: Application = express();
@@ -16,6 +20,9 @@ app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Welcome to Fraud Detection Service' });
 });
 
+// Routes
+app.use('/api/v1/fraud', fraudRoutes);
+
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -23,8 +30,9 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`Fraud Detection Service running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  await connectDB();
 });
 
 process.on('unhandledRejection', (err: Error) => {
