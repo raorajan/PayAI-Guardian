@@ -22,8 +22,8 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // Routes
-app.use('/api/v1/accounts', accountRoutes);
-app.use('/api/v1/transactions', transactionRoutes);
+app.use('/api/v1/payments/accounts', accountRoutes);
+app.use('/api/v1/payments/transactions', transactionRoutes);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({

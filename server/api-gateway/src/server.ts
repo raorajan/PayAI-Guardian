@@ -97,6 +97,9 @@ const swaggerDir = path.resolve(__dirname, 'swagger');
 const gatewayDocs = YAML.load(path.join(swaggerDir, 'gateway.swagger.yaml'));
 const authDocs = YAML.load(path.join(swaggerDir, 'auth.swagger.yaml'));
 const aiDocs = YAML.load(path.join(swaggerDir, 'ai.swagger.yaml'));
+const paymentsDocs = YAML.load(path.join(swaggerDir, 'payments.swagger.yaml'));
+const fraudDocs = YAML.load(path.join(swaggerDir, 'fraud.swagger.yaml'));
+const analyticsDocs = YAML.load(path.join(swaggerDir, 'analytics.swagger.yaml'));
 
 const combinedDocs = {
   openapi: '3.0.0',
@@ -109,17 +112,26 @@ const combinedDocs = {
     ...(gatewayDocs.tags || []),
     ...(authDocs.tags || []),
     ...(aiDocs.tags || []),
+    ...(paymentsDocs.tags || []),
+    ...(fraudDocs.tags || []),
+    ...(analyticsDocs.tags || []),
   ],
   paths: { 
     ...gatewayDocs.paths, 
     ...authDocs.paths,
     ...aiDocs.paths,
+    ...paymentsDocs.paths,
+    ...fraudDocs.paths,
+    ...analyticsDocs.paths,
   },
   components: {
     schemas: {
       ...(gatewayDocs.components?.schemas || {}),
       ...(authDocs.components?.schemas || {}),
       ...(aiDocs.components?.schemas || {}),
+      ...(paymentsDocs.components?.schemas || {}),
+      ...(fraudDocs.components?.schemas || {}),
+      ...(analyticsDocs.components?.schemas || {}),
     },
     securitySchemes: { 
       ...(gatewayDocs.components?.securitySchemes || {}),

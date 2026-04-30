@@ -1,0 +1,133 @@
+tags:
+  - name: Payments
+    description: Payment & Banking Account Service endpoints
+
+paths:
+  /api/v1/payments/accounts:
+    get:
+      tags:
+        - Payments
+      summary: Get all accounts
+      description: Retrieve a list of all bank accounts associated with the user.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: A list of accounts
+    post:
+      tags:
+        - Payments
+      summary: Create an account
+      description: Link or create a new bank account.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: number
+                  example: 1
+                bankName:
+                  type: string
+                  example: "Chase Bank"
+                accountType:
+                  type: string
+                  example: "Checking"
+                last4:
+                  type: string
+                  example: "1234"
+                balance:
+                  type: number
+                  example: 2500.50
+                colorTheme:
+                  type: string
+                  example: "#00C8FF"
+      responses:
+        201:
+          description: Account created successfully
+
+  /api/v1/payments/accounts/{id}:
+    get:
+      tags:
+        - Payments
+      summary: Get account by ID
+      description: Retrieve details for a specific bank account.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The account ID
+      responses:
+        200:
+          description: Account details
+
+  /api/v1/payments/transactions:
+    get:
+      tags:
+        - Payments
+      summary: Get all transactions
+      description: Retrieve a list of all recent transactions.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: A list of transactions
+    post:
+      tags:
+        - Payments
+      summary: Create a transaction
+      description: Initiate a new payment or transfer.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: number
+                  example: 1
+                accountId:
+                  type: number
+                  example: 5
+                description:
+                  type: string
+                  example: "Coffee Shop"
+                amount:
+                  type: number
+                  example: 4.50
+                category:
+                  type: string
+                  example: "Food & Drink"
+      responses:
+        201:
+          description: Transaction created successfully
+
+  /api/v1/payments/transactions/{id}:
+    get:
+      tags:
+        - Payments
+      summary: Get transaction by ID
+      description: Retrieve details for a specific transaction.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The transaction ID
+      responses:
+        200:
+          description: Transaction details

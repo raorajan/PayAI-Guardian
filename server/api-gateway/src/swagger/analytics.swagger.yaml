@@ -1,0 +1,28 @@
+tags:
+  - name: Analytics
+    description: Analytics and Dashboard Service endpoints
+
+paths:
+  /api/v1/analytics/dashboard/summary:
+    get:
+      tags:
+        - Analytics
+      summary: Get dashboard summary
+      description: Retrieve high-level summary metrics for the user dashboard.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Dashboard summary data
+
+  /api/v1/analytics/spending-stats:
+    get:
+      tags:
+        - Analytics
+      summary: Get spending statistics
+      description: Retrieve detailed spending breakdowns and heatmaps.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Spending statistics data
