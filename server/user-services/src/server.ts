@@ -1,7 +1,8 @@
 import express, { Application, Request, Response } from 'express';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
-import { connectDB } from './config/database';
+import { connectDB, db } from './config/database';
+import { sql } from 'drizzle-orm';
 import authRoutes from './routes/auth.routes';
 import passport from './config/passport';
 
@@ -23,6 +24,15 @@ app.use((req, res, next) => {
 
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Welcome to User Service' });
+});
+
+app.get('/health', async (req: Request, res: Response) => {
+  try {
+    await db.execute(sql`SELECT 1`);
+    res.status(200).json({ success: true, message: 'User Service & Database are healthy' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Database connection failed' });
+  }
 });
 
 // Auth routes

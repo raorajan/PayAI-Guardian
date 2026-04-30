@@ -250,6 +250,11 @@ app.use('/api/v1', proxy(API_USER_URL, {
   userResHeaderDecorator: (headers, req) => processCorsHeaders(headers, req as Request)
 }));
 
+app.get('/health', proxy(API_USER_URL, {
+  proxyReqPathResolver: () => '/health',
+  proxyErrorHandler: (err, res, next) => onProxyError(err, res, API_USER_URL)
+}));
+
 app.get('/', (req: Request, res: Response) => {
   res.json({ success: true, message: 'API Gateway is running' });
 });
