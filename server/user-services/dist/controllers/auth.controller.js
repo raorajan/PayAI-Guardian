@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.googleOneTap = exports.getMe = exports.socialCallback = exports.resendVerification = exports.verifyEmail = exports.resetPassword = exports.forgotPassword = exports.login = exports.register = void 0;
+exports.logout = exports.googleOneTap = exports.getMe = exports.socialCallback = exports.resendVerification = exports.verifyEmail = exports.resetPassword = exports.forgotPassword = exports.login = exports.register = void 0;
 const google_auth_library_1 = require("google-auth-library");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -471,4 +471,11 @@ exports.googleOneTap = (0, awaitHandlerFactory_middleware_1.default)(async (req,
             message: 'Invalid Google credential'
         });
     }
+});
+exports.logout = (0, awaitHandlerFactory_middleware_1.default)(async (req, res) => {
+    res.status(200).json({
+        statusCode: 200,
+        success: true,
+        message: 'Logged out successfully'
+    });
 });

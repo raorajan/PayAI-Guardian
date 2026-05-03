@@ -15,12 +15,17 @@ const PORT = process.env.PORT || 8001;
 app.set('trust proxy', 1);
 app.use((0, helmet_1.default)());
 app.use(passport_1.default.initialize());
-// CORS is handled by API Gateway - disable here to prevent conflicts
-// app.use(cors()); 
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+    console.log(`[DEBUG] Incoming Request: ${req.method} ${req.path}`);
+    next();
+});
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to User Service' });
+});
+app.get('/health', (req, res) => {
+    res.status(200).json({ success: true, message: 'User Service is healthy' });
 });
 // Auth routes
 app.use('/api/v1', auth_routes_1.default);

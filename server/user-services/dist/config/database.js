@@ -54,7 +54,7 @@ const connectDB = async () => {
     }
     catch (error) {
         console.error('❌ Database connection failed:', error);
-        process.exit(1);
+        // Removed process.exit(1) to prevent server crash during load spikes
     }
 };
 exports.connectDB = connectDB;

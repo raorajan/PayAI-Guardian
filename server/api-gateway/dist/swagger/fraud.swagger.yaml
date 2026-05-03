@@ -1,0 +1,64 @@
+tags:
+  - name: Fraud Shield
+    description: Fraud Detection Service endpoints
+
+paths:
+  /api/v1/fraud:
+    get:
+      tags:
+        - Fraud Shield
+      summary: Get fraud alerts
+      description: Retrieve all active or historical fraud alerts.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: A list of fraud alerts
+    post:
+      tags:
+        - Fraud Shield
+      summary: Create a newly detected fraud alert
+      description: System endpoint to create an alert for a suspicious transaction.
+      security:
+        - bearerAuth: []
+      responses:
+        201:
+          description: Alert created successfully
+
+  /api/v1/fraud/{id}/resolve:
+    patch:
+      tags:
+        - Fraud Shield
+      summary: Resolve a fraud alert
+      description: Mark a specific fraud alert as resolved or false positive.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The alert ID
+      responses:
+        200:
+          description: Alert resolved
+
+  /api/v1/fraud/metrics/{userId}:
+    get:
+      tags:
+        - Fraud Shield
+      summary: Get security metrics for a user
+      description: Retrieve overall fraud risk scores and security metrics.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+          description: The User ID
+      responses:
+        200:
+          description: Security metrics retrieved

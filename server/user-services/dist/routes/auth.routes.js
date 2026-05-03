@@ -10,6 +10,7 @@ const auth_middleware_1 = __importDefault(require("../middlewares/auth.middlewar
 const authRouter = (0, express_1.Router)();
 authRouter.post('/register', auth_controller_1.register);
 authRouter.post('/login', auth_controller_1.login);
+authRouter.post('/logout', auth_controller_1.logout);
 authRouter.post('/forgot-password', auth_controller_1.forgotPassword);
 authRouter.get('/verify', auth_controller_1.verifyEmail);
 authRouter.post('/reset-password', auth_controller_1.resetPassword);
@@ -18,5 +19,5 @@ authRouter.get('/auth/me', auth_middleware_1.default, auth_controller_1.getMe);
 // Social Auth Routes
 authRouter.get('/auth/google', passport_1.default.authenticate('google', { scope: ['profile', 'email'] }));
 authRouter.get('/auth/google/callback', passport_1.default.authenticate('google', { session: false }), auth_controller_1.socialCallback);
-authRouter.post('/auth/google-one-tap', auth_controller_1.googleOneTap);
+authRouter.post('/google-one-tap', auth_controller_1.googleOneTap);
 exports.default = authRouter;
